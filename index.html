@@ -1,0 +1,700 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Julius Caesar Quiz — Kahoot Style</title>
+<style>
+  :root {
+    --red: #e21b3c;
+    --blue: #1368ce;
+    --yellow: #d89e00;
+    --green: #26890c;
+    --red-h: #ff2647;
+    --blue-h: #1a7fe8;
+    --yellow-h: #f5b800;
+    --green-h: #2ea60e;
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --text: #eee;
+    --muted: #aaa;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; width: 100%; max-width: 860px; padding: 24px 16px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── START SCREEN ── */
+  #start-screen { gap: 24px; text-align: center; padding-top: 48px; }
+  .logo { font-size: 3rem; }
+  #start-screen h1 { font-size: 2.4rem; font-weight: 900; letter-spacing: -1px; }
+  #start-screen h1 span { color: #f5b800; }
+  #start-screen p { color: var(--muted); font-size: 1rem; max-width: 480px; }
+
+  .config-box {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .config-box label { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .config-box select, .config-box input[type=number] {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 2px solid #333;
+    background: #0f172a;
+    color: var(--text);
+    font-size: 1rem;
+    margin-top: 4px;
+  }
+  .config-row { display: flex; gap: 12px; }
+  .config-row > div { flex: 1; }
+  .btn-start {
+    background: #f5b800;
+    color: #111;
+    border: none;
+    border-radius: var(--radius);
+    padding: 16px 32px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    max-width: 520px;
+    transition: transform .1s, background .1s;
+  }
+  .btn-start:hover { background: #ffd000; transform: scale(1.02); }
+  .btn-start:active { transform: scale(0.98); }
+
+  /* ── QUIZ SCREEN ── */
+  #quiz-screen { gap: 0; }
+  .quiz-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    gap: 12px;
+  }
+  .q-counter { font-size: 0.9rem; color: var(--muted); white-space: nowrap; }
+  .progress-wrap { flex: 1; height: 8px; background: #2a2a4a; border-radius: 4px; overflow: hidden; }
+  .progress-bar { height: 100%; background: #f5b800; border-radius: 4px; transition: width .3s; }
+  .score-badge {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .timer-wrap {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    flex-shrink: 0;
+    margin: 0 auto 4px;
+  }
+  .timer-svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+  .timer-bg { fill: none; stroke: #2a2a4a; stroke-width: 6; }
+  .timer-arc { fill: none; stroke: #f5b800; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
+  .timer-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+  }
+
+  .category-tag {
+    font-size: 0.75rem;
+    background: #f5b80020;
+    color: #f5b800;
+    border: 1px solid #f5b80040;
+    border-radius: 20px;
+    padding: 3px 12px;
+    margin: 4px auto 12px;
+  }
+
+  .question-box {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    width: 100%;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+  .choice-btn {
+    border: none;
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    transition: transform .1s, filter .1s;
+    min-height: 70px;
+  }
+  .choice-btn:hover:not(:disabled) { filter: brightness(1.15); transform: scale(1.02); }
+  .choice-btn:active:not(:disabled) { transform: scale(0.98); }
+  .choice-btn:disabled { cursor: default; }
+  .choice-btn:nth-child(1) { background: var(--red); }
+  .choice-btn:nth-child(2) { background: var(--blue); }
+  .choice-btn:nth-child(3) { background: var(--yellow); color: #111; }
+  .choice-btn:nth-child(4) { background: var(--green); }
+  .choice-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(0,0,0,.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .choice-text { flex: 1; line-height: 1.3; }
+
+  .choice-btn.correct { filter: brightness(1.3) saturate(1.4); transform: scale(1.04); outline: 4px solid #fff; }
+  .choice-btn.wrong   { filter: brightness(0.4) saturate(0.3); }
+  .choice-btn.reveal  { filter: brightness(1.3) saturate(1.4); outline: 4px solid #fff; }
+
+  /* ── FEEDBACK BANNER ── */
+  .feedback {
+    width: 100%;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-top: 16px;
+    font-size: 0.95rem;
+    display: none;
+    align-items: flex-start;
+    gap: 12px;
+    line-height: 1.45;
+  }
+  .feedback.show { display: flex; }
+  .feedback.correct-fb { background: #1a4a1a; border: 1px solid #2ea60e; }
+  .feedback.wrong-fb   { background: #4a1a1a; border: 1px solid #e21b3c; }
+  .feedback-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .feedback strong { display: block; margin-bottom: 2px; }
+
+  .next-btn {
+    margin-top: 20px;
+    background: #f5b800;
+    color: #111;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: none;
+    transition: transform .1s;
+  }
+  .next-btn.show { display: block; }
+  .next-btn:hover { background: #ffd000; transform: scale(1.03); }
+
+  /* ── RESULTS SCREEN ── */
+  #results-screen { gap: 20px; text-align: center; padding-top: 40px; }
+  .result-trophy { font-size: 5rem; }
+  #results-screen h2 { font-size: 2rem; font-weight: 900; }
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 520px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat-num { font-size: 2rem; font-weight: 900; }
+  .stat-lbl { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat-card:nth-child(1) .stat-num { color: #26890c; }
+  .stat-card:nth-child(2) .stat-num { color: #e21b3c; }
+  .stat-card:nth-child(3) .stat-num { color: #f5b800; }
+
+  .score-grade {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 400px;
+  }
+  .score-grade span { color: var(--text); font-weight: 700; }
+
+  .result-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn-secondary {
+    background: var(--card);
+    color: var(--text);
+    border: 2px solid #444;
+    border-radius: var(--radius);
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color .1s;
+  }
+  .btn-secondary:hover { border-color: #aaa; }
+
+  .missed-section {
+    width: 100%;
+    max-width: 700px;
+    text-align: left;
+  }
+  .missed-section h3 { margin-bottom: 12px; font-size: 1.1rem; color: var(--muted); }
+  .missed-item {
+    background: var(--card);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    border-left: 4px solid var(--red);
+  }
+  .missed-item .mq { font-size: 0.9rem; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+  .missed-item .mc { font-size: 0.8rem; }
+  .missed-item .mc .your { color: #e21b3c; }
+  .missed-item .mc .right { color: #26890c; }
+
+  /* ── STREAK ── */
+  .streak-banner {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: #f5b800;
+    color: #111;
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-weight: 800;
+    font-size: 1rem;
+    z-index: 100;
+    pointer-events: none;
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .streak-banner.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 560px) {
+    .choices { grid-template-columns: 1fr; }
+    #start-screen h1 { font-size: 1.8rem; }
+    .question-box { font-size: 1.1rem; }
+    .result-stats { grid-template-columns: 1fr; max-width: 260px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ START SCREEN ══════════ -->
+<div id="start-screen" class="screen active">
+  <div class="logo">🎭</div>
+  <h1>Julius <span>Caesar</span> Quiz</h1>
+  <p>250 questions on Shakespeare's Julius Caesar — Acts, themes, rhetoric, characters &amp; more.</p>
+
+  <div class="config-box">
+    <div>
+      <label>Category</label>
+      <select id="sel-category">
+        <option value="all">All Categories (250 questions)</option>
+        <option value="Act 1">Act 1 (Q1–25)</option>
+        <option value="Act 2">Act 2 (Q26–45)</option>
+        <option value="Act 3">Act 3 (Q46–70)</option>
+        <option value="Act 4">Act 4 (Q71–85)</option>
+        <option value="Act 5">Act 5 (Q86–100)</option>
+        <option value="Character Analysis">Character Analysis (Q101–115)</option>
+        <option value="Shakespeare Background">Shakespeare Background (Q116–140)</option>
+        <option value="Themes, Devices &amp; Vocab">Themes, Devices &amp; Vocab (Q141–165)</option>
+        <option value="Quote ID &amp; Plot">Quote ID &amp; Plot (Q166–215)</option>
+        <option value="Advanced Questions">Advanced Questions (Q266–300)</option>
+      </select>
+    </div>
+    <div class="config-row">
+      <div>
+        <label>Number of questions</label>
+        <input type="number" id="sel-count" value="20" min="5" max="250">
+      </div>
+      <div>
+        <label>Timer (seconds)</label>
+        <input type="number" id="sel-timer" value="20" min="5" max="60">
+      </div>
+    </div>
+    <div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="sel-shuffle" checked style="width:16px;height:16px;">
+        <span style="font-size:0.95rem;color:var(--text);text-transform:none;letter-spacing:0;">Shuffle questions &amp; answers</span>
+      </label>
+    </div>
+  </div>
+
+  <button class="btn-start" onclick="startGame()">🚀 Start Quiz</button>
+  <p style="font-size:0.8rem;color:#555;margin-top:8px;">Note: Questions 216–265 are missing from the source document.</p>
+</div>
+
+<!-- ══════════ QUIZ SCREEN ══════════ -->
+<div id="quiz-screen" class="screen">
+  <div class="quiz-top">
+    <span class="q-counter" id="q-counter">1 / 20</span>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <span class="score-badge">⭐ <span id="score-display">0</span></span>
+  </div>
+
+  <div class="timer-wrap">
+    <svg class="timer-svg" viewBox="0 0 80 80">
+      <circle class="timer-bg" cx="40" cy="40" r="34"/>
+      <circle class="timer-arc" id="timer-arc" cx="40" cy="40" r="34"
+        stroke-dasharray="213.6" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-num" id="timer-num">20</div>
+  </div>
+
+  <div class="category-tag" id="q-cat">Act 1</div>
+  <div class="question-box" id="question-text">Loading…</div>
+
+  <div class="choices" id="choices"></div>
+
+  <div class="feedback" id="feedback">
+    <span class="feedback-icon" id="fb-icon">✅</span>
+    <div>
+      <strong id="fb-title">Correct!</strong>
+      <span id="fb-body"></span>
+    </div>
+  </div>
+
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next →</button>
+</div>
+
+<!-- ══════════ RESULTS SCREEN ══════════ -->
+<div id="results-screen" class="screen">
+  <div class="result-trophy" id="result-trophy">🏆</div>
+  <h2 id="result-heading">Quiz Complete!</h2>
+  <div class="result-stats">
+    <div class="stat-card"><span class="stat-num" id="r-correct">0</span><span class="stat-lbl">Correct</span></div>
+    <div class="stat-card"><span class="stat-num" id="r-wrong">0</span><span class="stat-lbl">Wrong</span></div>
+    <div class="stat-card"><span class="stat-num" id="r-pct">0%</span><span class="stat-lbl">Score</span></div>
+  </div>
+  <p class="score-grade" id="score-grade"></p>
+
+  <div class="result-btns">
+    <button class="btn-start" onclick="startGame(true)" style="max-width:200px;font-size:1rem;padding:12px 24px;">🔄 Play Again</button>
+    <button class="btn-secondary" onclick="showScreen('start-screen')">⚙️ Change Settings</button>
+  </div>
+
+  <div class="missed-section" id="missed-section">
+    <h3>❌ Missed Questions</h3>
+    <div id="missed-list"></div>
+  </div>
+</div>
+
+<!-- Streak banner -->
+<div class="streak-banner" id="streak-banner">🔥 3 in a row!</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const ALL_QUESTIONS = [{"num":1,"q":"In Act 1, Scene 1, the cobbler makes a pun when he says he is 'a mender of bad soles.' This is a wordplay on which two meanings?","choices":["Soles of shoes / souls of people","Sole fish / soul music","Solar panels / sole survivor","Sole proprietor / mended fences"],"correct":0,"cat":"Act 1"},{"num":2,"q":"'Hence! Home, you idle creatures, get you home!' Who speaks these words at the very opening of the play?","choices":["Cassius","Marullus","Flavius","Caesar"],"correct":2,"cat":"Act 1"},{"num":3,"q":"In Act 1, Scene 1, Marullus and Flavius are angry with the commoners for celebrating Caesar's triumph. Whose memory do they invoke to shame the crowd?","choices":["Crassus","Cicero","Pompey","Cato"],"correct":2,"cat":"Act 1"},{"num":4,"q":"What festival is taking place on the day the play opens, during which Caesar is expected to run?","choices":["The Festival of Saturn","The Feast of Lupercal","The Ides of March celebration","The Feast of Jupiter"],"correct":1,"cat":"Act 1"},{"num":5,"q":"Flavius plans to 'disrobe the images' of Caesar. What does he mean by this action?","choices":["Remove Caesar's clothes forcibly","Strip decorations placed on Caesar's statues","Burn Caesar's portraits","Steal Caesar's war trophies"],"correct":1,"cat":"Act 1"},{"num":6,"q":"Who first relays the soothsayer's warning to Caesar by repeating it aloud?","choices":["Casca","Cassius","Antony","Brutus"],"correct":3,"cat":"Act 1"},{"num":7,"q":"Caesar dismisses the soothsayer's warning by calling him what?","choices":["A madman","A liar","A dreamer","A fool"],"correct":2,"cat":"Act 1"},{"num":8,"q":"Cassius tells Brutus the story of the swimming contest in the Tiber to prove what point?","choices":["That Cassius is a better soldier than Caesar","That Caesar is physically weak and no more a god than other men","That Brutus should not fear Caesar","That Caesar was once Cassius's friend"],"correct":1,"cat":"Act 1"},{"num":9,"q":"During the swimming contest Cassius describes, what did Caesar cry out?","choices":["'Cassius, you have won!'","'Help me, Cassius, or I sink!'","'I yield to the river!'","'Fetch me some drink, Titinius!'"],"correct":1,"cat":"Act 1"},{"num":10,"q":"Cassius compares Caesar to a Colossus. What best describes a colossus?","choices":["A type of Roman chariot","A giant statue that people walk under","A Roman battle formation","A crown worn by emperors"],"correct":1,"cat":"Act 1"},{"num":11,"q":"'The fault, dear Brutus, is not in our stars, / But in ourselves, that we are underlings.' Who says this?","choices":["Brutus","Caesar","Cassius","Casca"],"correct":2,"cat":"Act 1"},{"num":12,"q":"Cassius's argument to Brutus in Act 1.2 centers on what main claim about himself and Caesar?","choices":["That he and Caesar were born enemies","That he and Caesar were born equally free, and Caesar has no divine right to rule","That he served Caesar faithfully and was betrayed","That Caesar murdered his family"],"correct":1,"cat":"Act 1"},{"num":13,"q":"What physical ailment does Cassius describe Caesar suffering while in Spain?","choices":["Gout","Blindness","Epilepsy / fever with shaking fits","Deafness in his left ear"],"correct":2,"cat":"Act 1"},{"num":14,"q":"Caesar tells Antony he is wary of Cassius because Cassius has what kind of look?","choices":["A lean and hungry look","A treacherous and shifting gaze","A pale and sickly complexion","A bold and arrogant stare"],"correct":0,"cat":"Act 1"},{"num":15,"q":"Caesar admits he would be cautious of Cassius 'if he were not Caesar.' This reveals what about his character?","choices":["Genuine humility","Dangerous overconfidence and inability to see his own flaws","An honest assessment of Cassius's power","A private fear he will not acknowledge publicly"],"correct":1,"cat":"Act 1"},{"num":16,"q":"According to Casca, how many times was the crown offered to Caesar at the Lupercal?","choices":["Once","Twice","Three times","Four times"],"correct":2,"cat":"Act 1"},{"num":17,"q":"According to Casca, what did the crowd do each time Caesar refused the crown?","choices":["They wept","They fell silent","They shouted and clapped","They threw flowers"],"correct":2,"cat":"Act 1"},{"num":18,"q":"What physical event at the Lupercal ceremony made some in the crowd sympathetic toward Caesar?","choices":["He was struck by a stone","He fell into a fit / fainted","He was knocked from his horse","He wept openly"],"correct":1,"cat":"Act 1"},{"num":19,"q":"Casca reports that after the incident, Cicero spoke but Casca could not understand him. In what language did Cicero speak?","choices":["He spoke too quietly","He spoke Greek","He spoke in riddles and metaphors","He spoke in Latin verse"],"correct":1,"cat":"Act 1"},{"num":20,"q":"In Act 1, Scene 3, what strange omens does Casca describe to Cicero during the storm?","choices":["A solar eclipse and black rain","A lion near the Capitol, men on fire, an owl at noon, and other horrors","A flood of the Tiber and a shower of stones","A blood-red moon and falling stars"],"correct":1,"cat":"Act 1"},{"num":21,"q":"Cicero's response to the terrifying omens in Act 1.3 is notably different from Casca's fear. What is Cicero's attitude?","choices":["He is equally terrified","He interprets the omens as signs of Caesar's death","He is calm, noting men may interpret things differently than intended","He runs away immediately"],"correct":2,"cat":"Act 1"},{"num":22,"q":"Cassius walks the streets 'unbraced' (shirt open) during the storm. What is his purpose?","choices":["He is testing the gods and showing he is unafraid","He is performing a religious ritual","He is sending a message to Caesar","He was drunk and forgot his clothes"],"correct":0,"cat":"Act 1"},{"num":23,"q":"What animal metaphor does Cassius use in Act 1.3 to describe Caesar as something that must be stopped before it grows dangerous?","choices":["A wolf among sheep","A serpent's egg that must be crushed before it hatches","A lion in a den","A colossus striding over small men"],"correct":1,"cat":"Act 1"},{"num":24,"q":"At the end of Act 1, Cassius says they still need to recruit one crucial person. Who?","choices":["Cicero","Antony","Casca","Brutus"],"correct":3,"cat":"Act 1"},{"num":25,"q":"Cassius plans to throw forged letters through Brutus's window praising him and urging action. What do these letters pretend to be?","choices":["Letters from several noble Roman citizens","Letters from Cassius under false names","A petition from the Senate as a body","Letters from Antony and Lepidus"],"correct":0,"cat":"Act 1"},{"num":26,"q":"In his Act 2.1 soliloquy, Brutus admits he has 'no personal cause' to kill Caesar. What reason does he give for justifying the murder?","choices":["Caesar had previously insulted him","Caesar's ambition, if he gains the crown, could corrupt him and endanger Rome","Cassius convinced him Caesar was already a tyrant","Caesar had conspired against the Senate"],"correct":1,"cat":"Act 2"},{"num":27,"q":"Brutus uses the metaphor of a ladder to describe ambition. What does he say happens once an ambitious man reaches the top?","choices":["He looks for another ladder to climb","He turns his back on those who helped him rise","He falls because he is too heavy","He shares the view with those below"],"correct":1,"cat":"Act 2"},{"num":28,"q":"Brutus says Caesar should be dealt with 'as a serpent's egg.' What does this metaphor argue?","choices":["Caesar is already dangerous and must be fought directly","Caesar is harmless now but must be killed before he becomes dangerous","Caesar has already bitten Rome and must be cut off","Caesar will shed his skin and become a worse ruler"],"correct":1,"cat":"Act 2"},{"num":29,"q":"Cassius proposes the conspirators swear an oath. How does Brutus respond?","choices":["He agrees immediately","He refuses, arguing their word as Romans is bond enough and an oath would insult the honor of their cause","He proposes they swear on Caesar's blood","He says they should swear to Jove"],"correct":1,"cat":"Act 2"},{"num":30,"q":"Why does Brutus say they should NOT include Cicero in the conspiracy?","choices":["Cicero is too old and feeble","Cicero will never follow anything that other men begin","Cicero secretly supports Caesar","Cicero knows too many senators who would warn Caesar"],"correct":1,"cat":"Act 2"},{"num":31,"q":"Cassius argues that Mark Antony should be killed along with Caesar. What is Cassius's specific concern?","choices":["Antony commands the Roman legions","Antony is a shrewd contriver who may cause trouble if Caesar dies","Antony is betrothed to Caesar's daughter","Antony has already discovered the plot"],"correct":1,"cat":"Act 2"},{"num":32,"q":"Brutus overrules killing Antony. This decision later proves to be what?","choices":["Brutus's wisest strategic call","A fatal error that allows Antony to turn the people against the conspirators","Irrelevant, since Antony flees Rome","Correct, since Antony does not seek revenge"],"correct":1,"cat":"Act 2"},{"num":33,"q":"Decius boasts he can persuade Caesar to come to the Capitol. He says Caesar loves hearing that men can be betrayed by flattery. What does this reveal about Caesar?","choices":["Caesar is superstitious and believes in magic","Caesar loves hunting stories","Caesar is susceptible to flattery and can be manipulated","Caesar is brave and wishes to hunt dangerous beasts"],"correct":2,"cat":"Act 2"},{"num":34,"q":"To prove she can keep Brutus's secrets, Portia has done what extraordinary thing?","choices":["Burned all his letters","Given herself a voluntary wound in the thigh","Spoken to the gods on his behalf","Bribed Lucius to spy for her"],"correct":1,"cat":"Act 2"},{"num":35,"q":"Portia describes herself as 'Cato's daughter.' What does invoking her father's name suggest?","choices":["She has noble Roman blood and the virtue of a family famous for integrity","She is richer than Brutus and deserves respect","She is older than Brutus and wiser","She has connections to the Senate that could protect him"],"correct":0,"cat":"Act 2"},{"num":36,"q":"Calphurnia says 'When beggars die, there are no comets seen; / The heavens themselves blaze forth the death of princes.' What rhetorical device is this?","choices":["Simile","Anaphora","Antithesis contrasting common people with rulers","Personification of the heavens"],"correct":2,"cat":"Act 2"},{"num":37,"q":"'Cowards die many times before their deaths; / The valiant never taste of death but once.' Who says this?","choices":["Brutus","Cassius","Caesar","Mark Antony"],"correct":2,"cat":"Act 2"},{"num":38,"q":"What omen does Caesar's servant report from the augurers that warns Caesar not to go out?","choices":["The Tiber has flooded","No heart was found inside the sacrificial beast","A comet appeared in the daytime sky","A lioness gave birth in the streets"],"correct":1,"cat":"Act 2"},{"num":39,"q":"Caesar initially agrees to stay home. What specifically changes his mind and makes him go to the Capitol?","choices":["He receives a letter from Brutus","Decius interprets Calphurnia's dream favorably and adds that the Senate plans to crown him that day","Cassius arrives and shames him","Antony convinces him it is safe"],"correct":1,"cat":"Act 2"},{"num":40,"q":"Decius reinterprets Calphurnia's dream of Caesar's statue running with blood. In his version, what do the smiling Romans bathing their hands signify?","choices":["That Caesar will die a glorious death in battle","That great men will revere Caesar and Rome will draw reviving strength from him","That Caesar will rule all of Rome's enemies","That the conspirators love Caesar truly"],"correct":1,"cat":"Act 2"},{"num":41,"q":"In Act 2.3, Artemidorus reads his warning letter. Which of the following is NOT named as a conspirator in the letter?","choices":["Trebonius","Casca","Antony","Cinna"],"correct":2,"cat":"Act 2"},{"num":42,"q":"What does Portia reveal in Act 2.4 that shows she has partially learned of the plot?","choices":["She knows Caesar will be stabbed","She knows Brutus has a suit Caesar will not grant, and is terrified by sounds from the Capitol","She has intercepted a letter from Cassius","She knows the time and place of the assassination"],"correct":1,"cat":"Act 2"},{"num":43,"q":"Portia says 'I have a man's mind but a woman's might.' What conflict does this reveal?","choices":["Love for Brutus and love for Caesar","Her knowledge of the plot and her inability to act or safely keep the secret","Her duty to Rome and her duty to her husband","Belief in the gods and belief in Brutus's honor"],"correct":1,"cat":"Act 2"},{"num":44,"q":"Brutus refuses to let the conspirators swear an oath because he believes the conspiracy is what?","choices":["A criminal venture requiring absolute secrecy","A noble, principled enterprise that should not need the guarantee of an oath","A personal vendetta that should be acknowledged openly","A military campaign requiring formal pledges"],"correct":1,"cat":"Act 2"},{"num":45,"q":"Ligarius discards his illness the moment Brutus mentions a worthy enterprise. What does his response show about Brutus's reputation?","choices":["Brutus is a physician who can cure disease","The mere word and presence of Brutus is enough to inspire devotion and courage","Ligarius was never truly ill","Brutus has promised Ligarius a reward"],"correct":1,"cat":"Act 2"},{"num":46,"q":"Caesar refuses to read Artemidorus's letter first, saying 'What touches us ourself shall be last served.' What does this decision reveal?","choices":["Caesar's generosity in attending to public matters first","Caesar's arrogance, and ironically the very pride that leads to his death","Caesar's distrust of Artemidorus","Caesar's desire to delay the Senate session"],"correct":1,"cat":"Act 3"},{"num":47,"q":"When Popilius Lena whispers that he hopes the enterprise succeeds, what is Cassius's immediate reaction?","choices":["He is pleased to have another ally","He fears the plot has been discovered and tells Brutus he will slay himself if needed","He attacks Popilius on the spot","He sends a message to Brutus to abort the plan"],"correct":1,"cat":"Act 3"},{"num":48,"q":"What pretext is used to approach Caesar in the Senate?","choices":["A petition requesting the repeal of Metellus Cimber's brother's banishment","A petition requesting the repeal of Metellus Cimber's own exile","A military command in Gaul","Relief from a heavy tax"],"correct":0,"cat":"Act 3"},{"num":49,"q":"Caesar compares himself to the Northern Star to refuse the petition. What quality does the Northern Star represent in this speech?","choices":["Brightness and fame","Unchanging constancy and firmness of purpose","Guidance to travelers","The divine favor of the gods"],"correct":1,"cat":"Act 3"},{"num":50,"q":"'Et tu, Brutè? Then fall, Caesar.' Why does Caesar yield only when he sees Brutus stab him?","choices":["Caesar only spoke Latin in moments of weakness","Brutus's betrayal breaks Caesar's will to resist; seeing his beloved Brutus attack him makes death acceptable","Caesar is quoting Plutarch directly","Caesar is cursing Brutus in his native tongue"],"correct":1,"cat":"Act 3"},{"num":51,"q":"Immediately after Caesar falls, Cinna shouts 'Liberty! Freedom! Tyranny is dead!' What do these lines show about the conspirators' immediate plan?","choices":["They plan to flee Rome at once","They plan to control the public narrative by immediately proclaiming liberation","They plan to elect a new Caesar","They plan to invite Antony to join their cause"],"correct":1,"cat":"Act 3"},{"num":52,"q":"Brutus proposes the conspirators bathe their hands in Caesar's blood and march to the marketplace with swords aloft. What purpose does he intend this to serve?","choices":["To frighten any remaining Caesar loyalists","To signify they are proud warriors acting for liberation, not butchers committing murder","To warn Antony not to interfere","To create a ceremony honoring Caesar's death"],"correct":1,"cat":"Act 3"},{"num":53,"q":"When Antony's servant arrives, what message does Antony send to the conspirators?","choices":["That Antony declares war on them","That Antony loved Caesar, fears Brutus, and will follow Brutus if given safe passage and an explanation","That Antony has already fled to Octavius","That Antony demands Caesar's body"],"correct":1,"cat":"Act 3"},{"num":54,"q":"Cassius privately warns Brutus that he fears Antony. What does Cassius specifically predict?","choices":["That Antony will raise an army that day","That Antony will use the funeral oration to move the crowd against them","That Antony has already sent for Octavius","That Antony has bribed the senators"],"correct":1,"cat":"Act 3"},{"num":55,"q":"Brutus gives Antony permission to speak at Caesar's funeral with key conditions. Which of the following is NOT one of Brutus's stated conditions?","choices":["Antony must not blame the conspirators","Antony must speak only good of Caesar","Antony must speak after Brutus","Antony must not reveal Caesar's will to the crowd"],"correct":3,"cat":"Act 3"},{"num":56,"q":"In his prophetic soliloquy over Caesar's body, Antony invokes the goddess Ate. Who is Ate in mythology?","choices":["Goddess of vengeance and ruin","Goddess of love","Goddess of the harvest","Goddess of war"],"correct":0,"cat":"Act 3"},{"num":57,"q":"Antony ends his prophecy with 'Cry Havoc! and let slip the dogs of war.' What does 'cry havoc' signal in a military context?","choices":["Sound the retreat","Give the signal for general slaughter and plunder with no mercy","Call for a truce","Declare a battle won"],"correct":1,"cat":"Act 3"},{"num":58,"q":"In his funeral speech, Brutus speaks in prose rather than verse. What does this choice signal?","choices":["Brutus does not know how to speak in verse","Prose signals directness and a plain-spoken appeal to Roman reason, as opposed to Antony's emotional verse","Brutus is speaking quickly because he is nervous","The play is only written in prose during funeral scenes"],"correct":1,"cat":"Act 3"},{"num":59,"q":"'Not that I loved Caesar less, but that I loved Rome more.' This line from Brutus's speech is an example of what rhetorical device?","choices":["Anaphora","Antithesis","Hyperbole","Irony"],"correct":1,"cat":"Act 3"},{"num":60,"q":"After Brutus's speech, the crowd cries 'Let him be Caesar.' This reaction is dramatically ironic because:","choices":["The crowd now loves Brutus more than they ever loved Caesar","The crowd would literally replace Caesar with Brutus, proving Brutus's justification for the killing hollow and showing the people do not understand the principle","The crowd has accepted Brutus's argument about liberty","The crowd is threatening Brutus with death"],"correct":1,"cat":"Act 3"},{"num":61,"q":"Antony opens with 'Friends, Romans, countrymen, lend me your ears.' Compared to Brutus's opening, this is more rhetorically effective because:","choices":["It is shorter","It puts himself on equal footing with the audience by calling them friends first before invoking patriotism, building personal connection before national identity","It uses more formal language","It immediately names Caesar"],"correct":1,"cat":"Act 3"},{"num":62,"q":"Antony repeatedly calls Brutus 'an honorable man.' This is an example of what rhetorical device?","choices":["Synecdoche","Litotes","Verbal irony used as rhetorical attack to undermine Brutus's credibility","Epistrophe"],"correct":2,"cat":"Act 3"},{"num":63,"q":"Antony says Caesar 'thrice refused' the crown at the Lupercal. He uses this as what type of appeal?","choices":["Ethos, by showing Caesar was modest","Logos, presenting evidence that contradicts the charge of ambition","Pathos, by making the crowd weep","Kairos, by making the argument timely"],"correct":1,"cat":"Act 3"},{"num":64,"q":"'Ambition should be made of sterner stuff.' Who says this and about whom?","choices":["Brutus about Cassius","Antony about Caesar, arguing Caesar's weeping for the poor proves he lacked ambition","Cassius about Brutus","Caesar about himself"],"correct":1,"cat":"Act 3"},{"num":65,"q":"Antony pauses mid-speech saying 'My heart is in the coffin there with Caesar.' What strategic purpose does this emotional pause serve?","choices":["It shows Antony is too grief-stricken to continue","It gives the crowd time to discuss among themselves, letting his arguments sink in, and presents him as a genuine mourner","It signals to Octavius's servant that the moment has arrived","It proves to the plebeians that Antony is sincere about not wanting war"],"correct":1,"cat":"Act 3"},{"num":66,"q":"Antony mentions Caesar's will early in his speech but says he will NOT read it. What is the rhetorical effect?","choices":["It makes the crowd trust him because he is not manipulating them","It creates suspense and inflames the crowd's desire to hear it, making them beg for it","It shows Antony respects Caesar's privacy","It signals that the will has been lost"],"correct":1,"cat":"Act 3"},{"num":67,"q":"Antony says 'This was the most unkindest cut of all' referring to Brutus's stab. The word 'unkindest' doubles as a pun. What are its two meanings?","choices":["Most cruel / most unnatural (violating the bond of a trusted friend)","Most unexpected / most sharp","Most treacherous / most unusual","Most painful / most public"],"correct":0,"cat":"Act 3"},{"num":68,"q":"According to Caesar's will, what does he leave to every Roman citizen?","choices":["His private orchards and arbors","Seventy-five drachmas each, plus his public parks and walks on the Tiber side","A share in his conquered territory","His slaves and household goods"],"correct":1,"cat":"Act 3"},{"num":69,"q":"The mob kills Cinna the poet even after he insists he is not Cinna the conspirator. What does this scene demonstrate?","choices":["The Roman people are well-informed citizens","The mob, once inflamed, is irrational; they act on name alone with no regard for innocence","Cinna the poet was secretly involved in the conspiracy","Antony intended for innocent people to be killed"],"correct":1,"cat":"Act 3"},{"num":70,"q":"At what landmark does Caesar fall when he is stabbed, according to Antony's funeral speech?","choices":["At the steps of the Senate","At the base of Pompey's statue","In the center of the Senate floor","At the altar of Jupiter"],"correct":1,"cat":"Act 3"},{"num":71,"q":"At the start of Act 4, Antony, Octavius, and Lepidus are marking names on a list. What is this process called in the play?","choices":["A bill of execution","Proscription","A warrant of outlawry","A sentence of banishment"],"correct":1,"cat":"Act 4"},{"num":72,"q":"After sending Lepidus away, what does Antony say about him to Octavius?","choices":["That Lepidus is a great soldier who deserves full partnership","That Lepidus is slight and unmeritable, fit to run errands but not to be a true partner in power","That Lepidus has already betrayed them to Brutus","That Lepidus is Antony's most trusted ally"],"correct":1,"cat":"Act 4"},{"num":73,"q":"Antony compares Lepidus to a horse. What is the point?","choices":["Lepidus is fast and useful in battle","Lepidus is powerful but untamed","Lepidus is a creature to be used, directed, and discarded when no longer useful","Lepidus will carry messages reliably"],"correct":2,"cat":"Act 4"},{"num":74,"q":"What specific action triggered the quarrel between Brutus and Cassius in Act 4?","choices":["Brutus abandoned Cassius on the battlefield","Brutus condemned Cassius's officer Lucius Pella for taking bribes, ignoring Cassius's letter asking for leniency","Brutus publicly accused Cassius of cowardice","Brutus denied Cassius a share of the Roman treasury"],"correct":1,"cat":"Act 4"},{"num":75,"q":"Brutus accuses Cassius of having 'an itching palm.' What does this phrase mean?","choices":["A nervous habit of scratching","Corruption: selling offices and promotions for gold","A disease common among soldiers","A superstition about scratching palms for good luck"],"correct":1,"cat":"Act 4"},{"num":76,"q":"Brutus says he would rather 'coin my heart / And drop my blood for drachmas' than get money through what means?","choices":["Borrowing from foreign nations","Raising taxes on Roman citizens","Vile and corrupt means, wringing money from peasants dishonestly","Accepting bribes from the Senate"],"correct":2,"cat":"Act 4"},{"num":77,"q":"At the height of their quarrel, Cassius bares his breast and offers Brutus his dagger. What does he say about his heart?","choices":["That it is cold and treacherous","That it is dearer than Pluto's mine, richer than gold, and Brutus may take it if he thinks Cassius is wrong","That it belongs to Rome and Caesar's memory","That it will break if Brutus calls him a coward again"],"correct":1,"cat":"Act 4"},{"num":78,"q":"The quarrel between Brutus and Cassius is interrupted by a poet who bursts in. Brutus dismisses him harshly, calling this a time for what?","choices":["Mourning","War, not for jigging fools","Philosophy","Heroism"],"correct":1,"cat":"Act 4"},{"num":79,"q":"How did Portia die, as Brutus reveals to Cassius?","choices":["She was killed by Antony's soldiers","She swallowed fire (hot coals) in grief over Brutus's absence and the power of Antony and Octavius","She died of a fever","She drowned herself in the Tiber"],"correct":1,"cat":"Act 4"},{"num":80,"q":"The ghost that appears to Brutus in his tent identifies itself as what?","choices":["The ghost of Portia","The ghost of Cicero","Brutus's evil spirit / the ghost of Caesar","A messenger from the gods"],"correct":2,"cat":"Act 4"},{"num":81,"q":"What does Caesar's ghost tell Brutus will happen?","choices":["That Brutus will be betrayed by Cassius","That Brutus will see the ghost again at Philippi","That Caesar forgives Brutus","That Brutus will be captured and paraded through Rome"],"correct":1,"cat":"Act 4"},{"num":82,"q":"Brutus argues for marching to Philippi immediately using a metaphor comparing the moment to what natural phenomenon?","choices":["A tide taken at the flood that leads to fortune","A storm that breaks before dawn","A river that carries the bravest swimmers","A comet that signals change"],"correct":0,"cat":"Act 4"},{"num":83,"q":"How many senators does Messala say Octavius, Antony, and Lepidus have killed by proscription?","choices":["Seventy","Fifty","A hundred","Twenty-three"],"correct":2,"cat":"Act 4"},{"num":84,"q":"Brutus's stoic public reaction to Portia's death before Messala is interpreted as:","choices":["Proof that Brutus did not truly love Portia","A Stoic philosophical exercise in controlling grief before his men","Evidence that Brutus is a hypocrite","A sign that Brutus is losing his mind"],"correct":1,"cat":"Act 4"},{"num":85,"q":"Why does Cassius change his philosophy at Philippi, giving partial credit to omens?","choices":["He has become religious after Caesar's death","Two eagles that followed their army left and were replaced by ravens and kites, seeming to him a sign of defeat","A soothsayer warned him in a dream","He received a letter from Antony predicting his death"],"correct":1,"cat":"Act 4"},{"num":86,"q":"Before Philippi, Cassius says Antony's words 'rob the Hybla bees / And leave them honeyless.' What does this mean?","choices":["Antony's words are sweeter than honey","Antony steals all the sweetness of rhetoric, leaving nothing of substance","The Hybla bees are famous for their venom","Antony takes credit for other men's eloquence"],"correct":1,"cat":"Act 5"},{"num":87,"q":"Octavius says he will not sheathe his sword until 'Caesar's three and thirty wounds / Be well avenged.' What is significant about this number?","choices":["It is the age at which Caesar died","It represents the number of conspirators","It is the traditional historical number of stab wounds recorded in Caesar's murder","It is a sacred number in Roman religion"],"correct":2,"cat":"Act 5"},{"num":88,"q":"Cassius sends Titinius to identify nearby troops. What does Pindarus mistakenly report?","choices":["That Titinius has been killed","That Titinius has been taken prisoner (though the troops are actually friendly Brutus supporters)","That Brutus has been captured","That Antony is retreating"],"correct":1,"cat":"Act 5"},{"num":89,"q":"Cassius decides to die based on the false report. He says 'Caesar, thou art revenged / Even with the sword that killed thee.' What sword is he referring to?","choices":["A new sword forged for the battle","The same sword used to kill Caesar, now guided through Cassius by Pindarus","A sword taken from Pompey's statue","A symbolic reference only"],"correct":1,"cat":"Act 5"},{"num":90,"q":"Who physically guides the sword that kills Cassius?","choices":["Cassius himself","Titinius","Pindarus","Messala"],"correct":2,"cat":"Act 5"},{"num":91,"q":"When Titinius returns and finds Cassius dead, what does he do?","choices":["He flees the battlefield in grief","He kills himself on Cassius's sword to honor him","He rides to warn Brutus","He surrenders to Antony's forces"],"correct":1,"cat":"Act 5"},{"num":92,"q":"What does Titinius place on Cassius's brow before dying?","choices":["A wreath of olive branches","A victory garland that the friendly troops had sent as a sign of success","A wreath of laurel leaves","A funeral wreath he carried from Rome"],"correct":1,"cat":"Act 5"},{"num":93,"q":"Brutus calls Cassius 'the last of all the Romans.' His controlled grief at this moment shows what about his character?","choices":["Brutus did not truly love Cassius","Brutus represses his grief stoically to continue leading his men, showing self-mastery","Brutus is glad to be rid of Cassius","Brutus has already become resigned to defeat"],"correct":1,"cat":"Act 5"},{"num":94,"q":"Lucilius is captured by Antony's soldiers. What trick does he use to protect Brutus?","choices":["He pretends to surrender and then escapes","He pretends to be Brutus, trying to protect Brutus from capture","He bribes the soldiers with gold","He kills himself rather than be taken"],"correct":1,"cat":"Act 5"},{"num":95,"q":"How does Antony respond when he discovers that the captured prisoner is Lucilius, not Brutus?","choices":["He has Lucilius executed immediately","He is angry at being tricked and orders a search","He praises Lucilius and says he would rather have such men as friends than enemies","He uses Lucilius as bait to draw out Brutus"],"correct":2,"cat":"Act 5"},{"num":96,"q":"Which man finally holds the sword while Brutus runs on it to die?","choices":["Clitus","Dardanus","Volumnius","Strato"],"correct":3,"cat":"Act 5"},{"num":97,"q":"Brutus's last words are 'Caesar, now be still. / I killed not thee with half so good a will.' What do these lines mean?","choices":["Brutus regrets killing Caesar and hopes his own death will atone for it","Brutus killed Caesar reluctantly out of duty; he now dies willingly, suggesting his own death is almost a relief from guilt","Brutus still believes he was right to kill Caesar","Brutus is forgiving Caesar for causing everything"],"correct":1,"cat":"Act 5"},{"num":98,"q":"Antony's elegy for Brutus calls him 'the noblest Roman of them all.' What does Antony say distinguished Brutus from the other conspirators?","choices":["That Brutus was the best swordsman","That Brutus acted not from envy of Caesar but from an honest general thought of the common good","That Brutus never wavered in his commitment","That Brutus was the only one who truly mourned Caesar afterward"],"correct":1,"cat":"Act 5"},{"num":99,"q":"Octavius gives the final speech, ordering Brutus's bones treated with military honors. What effect does this ending create?","choices":["It shows Octavius is weak","It restores order after the chaos of civil war and offers a formal recognition of Brutus's nobility even in defeat","It is ironic, since Octavius has no respect for the conspirators","It is meant to dishonor Brutus by burying him without ceremony"],"correct":1,"cat":"Act 5"},{"num":100,"q":"Strato says: 'For Brutus only overcame himself, / And no man else hath honor by his death.' What does this mean?","choices":["No one is proud of Brutus's death","Brutus died by his own hand; no external force defeated him, so no one can claim credit for conquering him","Only Brutus behaved honorably in the entire play","Strato is saying no one should mourn Brutus"],"correct":1,"cat":"Act 5"},{"num":101,"q":"Cassius describes himself as Brutus's 'glass' (mirror) in Act 1.2. What does he mean?","choices":["He reflects Brutus's words back honestly","He will show Brutus his own true worth and hidden qualities that Brutus cannot see in himself","He is as transparent as Brutus in his motives","He will protect Brutus's reputation"],"correct":1,"cat":"Character Analysis"},{"num":102,"q":"Which character in the play is most consistently shown to have accurate judgment, even when ignored?","choices":["Brutus","Caesar","Cassius","Calphurnia"],"correct":2,"cat":"Character Analysis"},{"num":103,"q":"Which of the following is NOT one of Brutus's critical strategic errors?","choices":["Letting Antony speak at Caesar's funeral","Refusing to kill Antony with Caesar","Choosing to march to Philippi rather than wait","Refusing to let the conspirators swear an oath"],"correct":3,"cat":"Character Analysis"},{"num":104,"q":"Which warning does Caesar actually briefly yield to before being talked out of it?","choices":["The soothsayer's warning about the ides of March","The augurers' warning about the missing heart in the sacrifice","Calphurnia's pleading that he stay home on the ides of March","Artemidorus's letter urging him to beware the conspirators"],"correct":2,"cat":"Character Analysis"},{"num":105,"q":"Which character is used by Shakespeare to show how powerful rhetoric can override reason in the general public?","choices":["Brutus","The plebeians who are swayed by both Brutus and Antony","Cinna the poet","Calphurnia"],"correct":1,"cat":"Character Analysis"},{"num":106,"q":"Portia wounds herself in the thigh to prove herself to Brutus. What does this self-wounding signify?","choices":["She is practicing for self-defense","She proves she can endure physical pain and keep secrets, making herself worthy of Brutus's confidence","She is performing a religious ritual for Brutus's safety","She is imitating a warrior's battle wound"],"correct":1,"cat":"Character Analysis"},{"num":107,"q":"In the Act 4.3 quarrel scene, what news deepens the emotional weight after Brutus and Cassius reconcile?","choices":["Octavius has killed all the senators","Brutus learns that Portia is dead","Antony is marching toward their camp","Caesar's ghost is seen near Sardis"],"correct":1,"cat":"Character Analysis"},{"num":108,"q":"Mark Antony in Act 3 describes himself as 'a plain blunt man' with no skill in rhetoric. This is an example of which strategy?","choices":["Honest self-evaluation","Paralipsis combined with false modesty, since he is actually one of the play's most skilled orators","A direct contrast to Brutus's style","A reference to his role as a simple soldier"],"correct":1,"cat":"Character Analysis"},{"num":109,"q":"Caesar dismisses the soothsayer and refuses Artemidorus's letter. What theme does this repeated pattern develop?","choices":["The theme of fate versus free will: Caesar could have changed his fate but chose not to","The theme of the corruption of power","The theme that all prophecy is false","The theme of the cowardice of great men"],"correct":0,"cat":"Character Analysis"},{"num":110,"q":"Which character is described as having a 'lean and hungry look' and thinking too much?","choices":["Brutus","Casca","Cassius","Antony"],"correct":2,"cat":"Character Analysis"},{"num":111,"q":"Antony calls Caesar's wounds 'poor poor dumb mouths' needing a voice. What purpose does this personification serve?","choices":["To frighten the crowd with gore","To make Caesar seem to speak from death through Antony, visually proving Caesar's suffering","To show the conspirators were cowardly","To invoke the Roman gods to avenge the murder"],"correct":1,"cat":"Character Analysis"},{"num":112,"q":"Calphurnia says she 'never stood on ceremonies / Yet now they fright me.' What does 'ceremonies' mean in this Shakespearean usage?","choices":["Formal court events","Omens or portents to be heeded","Religious holidays","Military traditions"],"correct":1,"cat":"Character Analysis"},{"num":113,"q":"Brutus says to Portia: 'As dear to me as are the ruddy drops / That visit my sad heart.' What does 'ruddy drops' refer to?","choices":["His tears","The blood in his heart","The wine they share","The red flowers in his garden"],"correct":1,"cat":"Character Analysis"},{"num":114,"q":"One conspirator named 'Decius' in Shakespeare's play is sometimes given a different first name. What is the historically accurate version of this character's first name?","choices":["Marcus","Caius","Decimus","Publius"],"correct":2,"cat":"Character Analysis"},{"num":115,"q":"Caesar speaks of himself in the third person throughout the play. What does this rhetorical habit reveal?","choices":["He is confused about his own identity","He has so completely merged his personal identity with his public role that he treats himself as an institution, not a man","He is quoting official state proclamations","He has a speech impediment"],"correct":1,"cat":"Character Analysis"},{"num":116,"q":"According to the background presentation, Shakespeare was born and died in the same town. What is that town?","choices":["London","Birmingham","Stratford-upon-Avon","Canterbury"],"correct":2,"cat":"Shakespeare Background"},{"num":117,"q":"What is the traditionally given birth date for Shakespeare, and why is this date uncertain?","choices":["April 23, 1564, because his baptism record on April 26 is the only documented date, and April 23 was chosen to coincide with his death date and St. George's Day","May 1, 1564, because church records were destroyed","April 23, 1564, because a birth certificate was found in 1900","January 1, 1564, because records only began at New Year"],"correct":0,"cat":"Shakespeare Background"},{"num":118,"q":"What was the occupation of Shakespeare's father, John Shakespeare?","choices":["A bookseller","A glove merchant","A schoolteacher","A wool merchant"],"correct":1,"cat":"Shakespeare Background"},{"num":119,"q":"How old was Shakespeare when he married Anne Hathaway, and how old was she?","choices":["He was 20, she was 22","He was around 18, she was 26","He was 21, she was 21","He was 16, she was 30"],"correct":1,"cat":"Shakespeare Background"},{"num":120,"q":"Shakespeare and Anne Hathaway had three children. Which of the children died in childhood?","choices":["Susanna","Judith","Hamnet","All three survived"],"correct":2,"cat":"Shakespeare Background"},{"num":121,"q":"How many plays did Shakespeare write in total, according to the background presentation?","choices":["27","37","47","52"],"correct":1,"cat":"Shakespeare Background"},{"num":122,"q":"Which of Shakespeare's plays is his longest?","choices":["Macbeth","Othello","Hamlet","King Lear"],"correct":2,"cat":"Shakespeare Background"},{"num":123,"q":"Which is Shakespeare's shortest play?","choices":["A Midsummer Night's Dream","The Comedy of Errors","The Two Gentlemen of Verona","Pericles"],"correct":1,"cat":"Shakespeare Background"},{"num":124,"q":"Shakespeare's plays are grouped into three main categories. Which lists them correctly?","choices":["Tragedies, Comedies, and Romances","Comedies, Tragedies, and Histories","Histories, Tragedies, and Sonnets","Dramas, Comedies, and Epics"],"correct":1,"cat":"Shakespeare Background"},{"num":125,"q":"What distinguishes Shakespeare's Comedies from his Tragedies in terms of plot structure?","choices":["Comedies are shorter; tragedies have more characters","Comedies usually involve mistaken identities and end with a marriage; tragedies always end in death","Comedies are written in prose; tragedies are written in verse","Comedies have happy heroes; tragedies have evil villains"],"correct":1,"cat":"Shakespeare Background"},{"num":126,"q":"Three of Shakespeare's plays are called 'Problem Plays.' Which of the following is NOT one of them?","choices":["All's Well That Ends Well","Troilus and Cressida","Measure for Measure","The Merchant of Venice"],"correct":3,"cat":"Shakespeare Background"},{"num":127,"q":"Shakespeare wrote many sonnets in 1592-1593. Why did he write so many during that period?","choices":["He was commissioned by Queen Elizabeth","A plague closed London's theatres, and he turned to poetry for income","He was in exile from London after a legal dispute","He was mourning the death of his son Hamnet"],"correct":1,"cat":"Shakespeare Background"},{"num":128,"q":"Which of the following famous phrases did NOT originate with Shakespeare?","choices":["Wild goose chase","Break the ice","Haste makes waste","Wear your heart on your sleeve"],"correct":2,"cat":"Shakespeare Background"},{"num":129,"q":"Which of Shakespeare's plays is described as having been written specifically for King James I?","choices":["Hamlet","Othello","Macbeth","Julius Caesar"],"correct":2,"cat":"Shakespeare Background"},{"num":130,"q":"What was the name of the famous theatre Shakespeare was associated with, and when was it built?","choices":["The Curtain, built in 1576","The Globe, built in 1599","The Rose, built in 1587","The Swan, built in 1595"],"correct":1,"cat":"Shakespeare Background"},{"num":131,"q":"The Globe Theatre burned to the ground. In what year?","choices":["1601","1607","1613","1620"],"correct":2,"cat":"Shakespeare Background"},{"num":132,"q":"At the Globe, what was the cheapest admission, and where did those paying that price stand?","choices":["Two pennies, in the galleries","One penny, in the open air as groundlings","Three pennies, on the stage","One penny, in the covered balcony"],"correct":1,"cat":"Shakespeare Background"},{"num":133,"q":"Shakespeare's English is classified as what type of English, distinguishing it from Beowulf's language (Old English)?","choices":["Old English","Middle English","Modern English","Early Medieval English"],"correct":2,"cat":"Shakespeare Background"},{"num":134,"q":"What was the historical source Shakespeare primarily used for his information about Julius Caesar?","choices":["Suetonius's Lives of the Twelve Caesars","Tacitus's Annals","Plutarch's Lives of the Noble Greeks and Romans, translated by Thomas North","Livy's Ab Urbe Condita"],"correct":2,"cat":"Shakespeare Background"},{"num":135,"q":"The historical Julius Caesar was born July 12, 100 BCE. What is significant about March 15, 44 BCE?","choices":["He became Dictator of Rome","He conquered all of Gaul","He was assassinated; this is the Ides of March","He crossed the Rubicon River"],"correct":2,"cat":"Shakespeare Background"},{"num":136,"q":"Caesar was part of the First Triumvirate. Who were the other two members?","choices":["Brutus and Cassius","Pompey and Crassus","Antony and Octavius","Cicero and Cato"],"correct":1,"cat":"Shakespeare Background"},{"num":137,"q":"A Roman Dictator did NOT have absolute power. What constraint existed?","choices":["He could only serve for one month","He still had to answer to the Senate and could be prosecuted after his term ended","He could not command armies outside Italy","He required the approval of two consuls for all decisions"],"correct":1,"cat":"Shakespeare Background"},{"num":138,"q":"What dynasty ruled England during Shakespeare's lifetime, and who succeeded Elizabeth I?","choices":["The Plantagenets; Mary Queen of Scots","The Tudors; James I of England (James VI of Scotland)","The Stuarts; James I","The Plantagenets; James VI"],"correct":1,"cat":"Shakespeare Background"},{"num":139,"q":"Elizabeth I earned the nickname 'the Virgin Queen' for what reason?","choices":["She was known for her purity of faith","She never married and left no heirs","She lived in a convent before becoming queen","She refused all foreign suitors and declared this publicly"],"correct":1,"cat":"Shakespeare Background"},{"num":140,"q":"The King James Bible was sponsored by which monarch?","choices":["Elizabeth I, as a symbol of Protestant power","James I, who sponsored a new English translation","Henry VIII, as part of the Church of England's founding","Charles I, as a diplomatic gesture to Rome"],"correct":1,"cat":"Shakespeare Background"},{"num":141,"q":"In Julius Caesar, the climax of the play falls in Act 3. Which specific event IS the climax?","choices":["Brutus's funeral speech","Caesar's assassination at the Senate","Antony's funeral speech turning the crowd","Antony's prophecy alone with Caesar's body"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":142,"q":"The theme of 'appearance vs. reality' appears when Brutus describes conspiracy as something that must:","choices":["Strike quickly before it is exposed","Hide behind smiles and affability, since its true face is monstrous","Strike at night when men are most free","Present itself openly as a righteous cause"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":143,"q":"In Shakespeare's Five-Act structure, Act 4 is 'Consequences.' What are the main consequences shown in Act 4 of Julius Caesar?","choices":["Caesar's death and the public's reaction","The formation of the triumvirate, the Brutus-Cassius quarrel, Portia's death, and the ghost's appearance","The conspiracy's formation and planning","The battle of Philippi"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":144,"q":"According to the four humours theory, a person with an excess of choler was associated with what disposition?","choices":["Optimistic and courageous (sanguine)","Dull and indifferent (phlegmatic)","Angry and bad-tempered","Sad and gloomy (melancholy)"],"correct":2,"cat":"Themes, Devices & Vocab"},{"num":145,"q":"Cassius's 'lean and hungry look' would be associated with which humour?","choices":["Sanguine (blood), making him courageous","Choler (yellow bile), making him easily angered","Melancholy (black bile), making him brooding and scheming","Phlegm, making him sluggish"],"correct":2,"cat":"Themes, Devices & Vocab"},{"num":146,"q":"The phrase 'it's Greek to me' originates in Julius Caesar. In what context does it appear?","choices":["Casca says he could not understand Cicero because Cicero spoke in Greek","Caesar refuses to listen to a soothsayer who warned in Greek","Brutus reads a letter he cannot understand","Antony quotes Greek philosophy the crowd cannot follow"],"correct":0,"cat":"Themes, Devices & Vocab"},{"num":147,"q":"Antony's repeated use of 'But Brutus says he was ambitious, / And Brutus is an honorable man' is an example of:","choices":["Synecdoche","Anaphora combined with verbal irony used to systematically undermine Brutus's credibility","Enthymeme with a missing premise","Logos only"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":148,"q":"The dramatic irony in Act 2.2 occurs when Caesar invites the conspirators for wine and says they will 'straightway go together.' Why is this ironic?","choices":["Caesar suspects them and is testing their loyalty","Caesar genuinely loves these men who are about to kill him, and the audience knows what he does not","Caesar is pretending to be friendly while planning to arrest them","The conspirators are not real friends and Caesar knows it"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":149,"q":"The soothsayer appears in Act 3.1. Caesar says 'The ides of March are come.' The soothsayer replies 'Ay, Caesar, but not gone.' What device does this exchange represent?","choices":["Foreshadowing","Dark humor","Dramatic irony: the audience knows the assassination is about to happen","A moment of anagnorisis"],"correct":2,"cat":"Themes, Devices & Vocab"},{"num":150,"q":"Brutus justifies killing Caesar based on what Caesar might become, not what he is. This is a logical flaw called what?","choices":["Ad hominem attack","The slippery slope fallacy: acting against a hypothetical future harm rather than a present one","A false analogy","Begging the question"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":151,"q":"In Shakespeare's time, 'wherefore' most commonly means:","choices":["Where","When","Why","Which way"],"correct":2,"cat":"Themes, Devices & Vocab"},{"num":152,"q":"When characters say 'Soft!' as an exclamation (e.g., 'Soft, who comes here?'), what does it mean?","choices":["Speak quietly","Wait / hush / hold on","Be gentle","Turn back"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":153,"q":"What does 'Hark' mean in Shakespearean English?","choices":["Hurry","Listen","Look","Beware"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":154,"q":"What does 'prithee' mean, as used in 'I prithee, Strato, stay thou by thy lord'?","choices":["I beg you / I pray thee","I command you","I trust you","I warn you"],"correct":0,"cat":"Themes, Devices & Vocab"},{"num":155,"q":"'Augurers' (augurs) were specific Roman officials. What did they do?","choices":["Composed official laws","Performed military executions","Interpreted omens, especially through observing bird behavior and animal entrails","Counted votes in Senate elections"],"correct":2,"cat":"Themes, Devices & Vocab"},{"num":156,"q":"Brutus reads his letter by the light of 'exhalations, whizzing in the air.' What are these exhalations?","choices":["Fireflies","Shooting stars or meteors","Torchlight reflections","Flickers of lightning"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":157,"q":"What is a 'portent,' as used when Calphurnia describes her warnings to Caesar?","choices":["A heavy gate or door","An omen, especially of something evil","A royal decree","A medical remedy"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":158,"q":"When Brutus says his honesty makes Cassius's threats 'pass by me as the idle wind,' what does 'idle' mean here?","choices":["Lazy","Powerless / without effect","Angry","Constant"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":159,"q":"A 'proscription' in Roman law was:","choices":["A formal treaty","A list of persons condemned and outlawed, whose property could be seized and who could be killed without penalty","A declaration of war requiring Senate approval","A legal judgment exiling citizens to a province"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":160,"q":"When Brutus says Caesar 'augmented' would run to extremities, what does augmented mean?","choices":["Reduced and humbled","Increased / enlarged / made greater","Corrupted and changed","Crowned and worshipped"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":161,"q":"What does 'enfranchisement' mean, as used in Cassius's cry 'Liberty, freedom, and enfranchisement'?","choices":["Military conquest","Freedom from slavery or political restriction; the granting of rights","A grant of land from the government","The right to vote in Senate elections"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":162,"q":"What does 'cautelous' mean, as in Brutus's phrase 'Swear priests and cowards and men cautelous'?","choices":["Cowardly","Cautious in a cunning or deceitful way","Overly religious","Physically weak"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":163,"q":"What does 'mettle' mean as used in the play?","choices":["Metal used for swords","Courage and determination","Inherited nobility","Physical strength"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":164,"q":"'Prodigies' as used in the storm scenes refers to what?","choices":["Unusually gifted individuals","Extraordinary or monstrous events seen as omens","Products of Roman engineering","Military victories"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":165,"q":"What does 'soothsayer' literally mean, and what does the soothsayer in the play do?","choices":["A healer of truth; he cures sick people","A sayer of truth / sooth; he predicts or warns of future events, particularly warning Caesar about the ides of March","A keeper of sacred texts; he reads omens from books","A builder of Rome; he constructs the Capitol"],"correct":1,"cat":"Themes, Devices & Vocab"},{"num":166,"q":"'Between the acting of a dreadful thing / And the first motion, all the interim is / Like a phantasma or a hideous dream.' Who speaks this and what is being described?","choices":["Cassius, describing the night of the storm","Brutus, describing the mental state between first conceiving a terrible plan and carrying it out","Caesar, describing his fear of the ides","Antony, describing his grief after seeing Caesar's body"],"correct":1,"cat":"Quote ID & Plot"},{"num":167,"q":"'It is the bright day that brings forth the adder, / And that craves wary walking.' Who says this and what argument does it support?","choices":["Calphurnia, arguing Caesar should not go out","Cassius, arguing for the need to act quickly","Brutus, arguing that Caesar's power, once at its height, will become dangerous","Caesar, arguing that danger cannot stop him"],"correct":2,"cat":"Quote ID & Plot"},{"num":168,"q":"'There is a tide in the affairs of men / Which, taken at the flood, leads on to fortune.' Who says this and in what context?","choices":["Caesar, justifying going to the Senate despite omens","Brutus, arguing for marching immediately to Philippi","Cassius, convincing Brutus to join the conspiracy","Antony, justifying his decision to read Caesar's will"],"correct":1,"cat":"Quote ID & Plot"},{"num":169,"q":"'This was the noblest Roman of them all. / All the conspirators save only he / Did that they did in envy of great Caesar.' Who speaks these lines and about whom?","choices":["Octavius about Cassius","Brutus about Caesar","Antony about Brutus","Caesar about Brutus in a vision"],"correct":2,"cat":"Quote ID & Plot"},{"num":170,"q":"'Let's carve him as a dish fit for the gods, / Not hew him as a carcass fit for hounds.' Who says this and what position does it express?","choices":["Cassius, arguing for a quick and decisive killing","Brutus, arguing the assassination should be done with dignity, not become a bloody massacre","Caesar, describing how he expects to be remembered","Antony, describing how Caesar was wrongfully treated"],"correct":1,"cat":"Quote ID & Plot"},{"num":171,"q":"'You blocks, you stones, you worse than senseless things! / O you hard hearts, you cruel men of Rome.' Who delivers this and to whom?","choices":["Caesar to the Senate","Marullus to the commoners celebrating Caesar's triumph over Pompey","Cassius to the conspirators","Brutus to the crowd at the funeral"],"correct":1,"cat":"Quote ID & Plot"},{"num":172,"q":"'O, what a fall was there, my countrymen! / Then I and you and all of us fell down, / Whilst bloody treason flourished over us.' Who says this and in what context?","choices":["Cassius, after the failure at Philippi","Brutus at Caesar's funeral","Antony at Caesar's funeral, describing Caesar's fall as Rome's fall","Calphurnia describing her prophetic dream"],"correct":2,"cat":"Quote ID & Plot"},{"num":173,"q":"'O judgment, thou art fled to brutish beasts, / And men have lost their reason!' What rhetorical purpose does this outburst in Antony's funeral speech serve?","choices":["It shows Antony has lost control of his emotions","It shames the crowd for failing to mourn Caesar, inflaming their sympathy while Antony feigns composing himself","It addresses the Senate directly","It invokes divine judgment against the conspirators"],"correct":1,"cat":"Quote ID & Plot"},{"num":174,"q":"'Caesar, thou art revenged / Even with the sword that killed thee.' Who says this and what is the dramatic irony?","choices":["Antony, swearing revenge as he stands over Caesar's body","Cassius, dying on the same sword used to kill Caesar, making Caesar's death the indirect cause of Cassius's death","The ghost of Caesar, appearing at Philippi","Brutus, dying by his own hand"],"correct":1,"cat":"Quote ID & Plot"},{"num":175,"q":"'Upon what meat doth this our Caesar feed, / That he is grown so great?' Who says this and what argument is being made?","choices":["Marullus, criticizing Caesar to the commoners","Cassius, arguing to Brutus that Caesar is no naturally superior being; he grew great on the same diet as other Romans","Brutus, questioning whether Caesar deserves his power","Antony, praising Caesar's military achievements"],"correct":1,"cat":"Quote ID & Plot"},{"num":176,"q":"What Act and Scene does Caesar's assassination take place in?","choices":["Act 2, Scene 3","Act 3, Scene 1","Act 3, Scene 2","Act 4, Scene 1"],"correct":1,"cat":"Quote ID & Plot"},{"num":177,"q":"After the assassination, who is the first of the conspirators to formally welcome Antony?","choices":["Cassius","Casca","Brutus","Decius"],"correct":2,"cat":"Quote ID & Plot"},{"num":178,"q":"Trebonius's specific role in the assassination plan is to:","choices":["Be the first to strike Caesar","Lead the petition for Publius Cimber","Draw Mark Antony away from the Senate so he cannot interfere","Guard the door of the Senate"],"correct":2,"cat":"Quote ID & Plot"},{"num":179,"q":"How does Cassius die? Summarize the chain of events.","choices":["He is killed by Antony's soldiers at Philippi","He kills himself after Pindarus falsely reports Titinius captured, when Titinius was actually being welcomed by friendly troops","He dies fighting Octavius","He is captured and executed by Antony's order"],"correct":1,"cat":"Quote ID & Plot"},{"num":180,"q":"What is the name of the person who writes a warning letter to Caesar naming all the conspirators?","choices":["Calphurnia","Cicero","Artemidorus","The Soothsayer"],"correct":2,"cat":"Quote ID & Plot"},{"num":181,"q":"What is the primary structural function of Act 1, Scene 1?","choices":["It introduces Caesar and his political ambitions","It establishes political tensions in Rome and the people's fickleness toward power before introducing the major characters","It reveals the full conspiracy plan","It introduces Brutus as the protagonist"],"correct":1,"cat":"Quote ID & Plot"},{"num":182,"q":"Casca is the first conspirator to physically strike Caesar, saying 'Speak, hands, for me!' What does this suggest about Casca?","choices":["He is unable to speak due to fear","He prefers action to words and lets the act itself be his statement","He is deaf and communicates through gestures","He is imitating the tradition of Roman gladiators"],"correct":1,"cat":"Quote ID & Plot"},{"num":183,"q":"What is Casca's role in Act 1 that gives him access to information about the Lupercal ceremony?","choices":["He is a senator who attended the ceremony","He is directly present at the ceremony and reports what happened to Brutus and Cassius","He receives a written account from Caesar's secretary","He is a soldier who guards the event"],"correct":1,"cat":"Quote ID & Plot"},{"num":184,"q":"Why is the setting of Caesar's triumph over Pompey's sons, at the play's opening, dramatically significant?","choices":["It allows Shakespeare to introduce all the characters quickly","The celebration itself triggers the conspirators' urgency, as it shows Caesar's growing popularity and hints at his ambition for the crown","It shows Rome is at peace and Caesar is a good ruler","It establishes that Caesar has recently won a foreign war"],"correct":1,"cat":"Quote ID & Plot"},{"num":185,"q":"After the ghost of Caesar visits Brutus, what does Brutus immediately do?","choices":["He attempts to flee the camp","He wakes his sleeping attendants and asks if they saw anything, then sends instructions to Cassius to advance his troops before them","He prays to the gods for protection","He writes a letter to Antony proposing a truce"],"correct":1,"cat":"Quote ID & Plot"},{"num":186,"q":"Caesar says 'The cause is in my will. I will not come. / That is enough to satisfy the Senate.' What does this reveal about how Caesar views his own authority?","choices":["He is being modest and deferring to tradition","He believes his personal will is sufficient justification for any action, revealing a belief in his own absolute authority","He is covering for Calphurnia's fear","He is signaling to Decius that something is wrong"],"correct":1,"cat":"Quote ID & Plot"},{"num":187,"q":"In the quarrel scene, Brutus says he 'can raise no money by vile means.' This reveals what tension in his character?","choices":["Brutus is hypocritical: he participated in murder but draws the line at corruption","Brutus is principled about financial matters but not about political violence","Both A and B, showing Brutus's self-contradictory idealism","Brutus is simply more concerned about his reputation than Caesar's life"],"correct":2,"cat":"Quote ID & Plot"},{"num":188,"q":"When Cassius believes Titinius has been captured and calls himself a coward for living to see it, what does this reveal?","choices":["He is genuinely brave and could not save Titinius","Despite his scheming character, he has genuine deep loyalty and love for Titinius","He is trying to impress his troops with theatrical grief","He has gone mad from the strain of battle"],"correct":1,"cat":"Quote ID & Plot"},{"num":189,"q":"The play begins with commoners in the street and ends with an army on a battlefield. What does this structural choice suggest?","choices":["The play is primarily about the common people of Rome","Political assassination begins with popular manipulation and ends in war, showing that the decisions of a few men destroy an entire society","It follows Aristotelian unity of action from small to large","Shakespeare is critiquing Roman military culture"],"correct":1,"cat":"Quote ID & Plot"},{"num":190,"q":"Antony's final speech calling Brutus 'the noblest Roman' is spoken over Brutus's body by his enemy. Why is this particularly meaningful?","choices":["Antony loved Brutus more than any other conspirator","Coming from Caesar's fiercest avenger, it carries the most credibility; even Brutus's enemy acknowledges his genuine honor","Antony is being ironic and the praise is meant as mockery","Antony is performing for Octavius's political benefit"],"correct":1,"cat":"Quote ID & Plot"},{"num":191,"q":"Brutus consistently refuses to be pragmatic: no oath, no killing Antony, no corruption for funding. What does this pattern suggest as a theme?","choices":["Rome was corrupt and unworthy of Brutus's principles","Excessive idealism, while admirable in character, may be a fatal flaw when dealing with practical political reality","The gods punished Brutus for killing Caesar","Honor is always rewarded in the end"],"correct":1,"cat":"Quote ID & Plot"},{"num":192,"q":"Calphurnia's dream features Caesar's statue running with blood. Decius reinterprets the same image as positive. What does this show?","choices":["Dreams have no fixed meaning and can be proved false by logic","The same evidence can be spun to support opposite conclusions depending on the interpreter's goals, showing the power of rhetoric over truth","Calphurnia's interpretation was incorrect and Decius was right","The gods sent the dream to test Caesar's wisdom"],"correct":1,"cat":"Quote ID & Plot"},{"num":193,"q":"After Caesar's murder, the conspirators walk with 'red weapons' raised, calling out 'Peace, freedom, and liberty!' What is the deep irony?","choices":["The weapons they carry are actually fake","Men with blood-soaked weapons crying peace is a contradiction that exposes how violence and the promise of freedom are intertwined in the political act they have just committed","The crowd does not notice the contradiction","Antony planned this image to discredit the conspirators"],"correct":1,"cat":"Quote ID & Plot"},{"num":194,"q":"What is the primary dramatic function of the storms and supernatural events throughout Julius Caesar?","choices":["To provide historical accuracy about Roman superstition","To make the play exciting and entertaining","To signal disorder in the natural world mirroring disorder in the human/political world, reinforcing that Caesar's murder disrupted the natural order","To prove that the gods are real and actively punish mortals"],"correct":2,"cat":"Quote ID & Plot"},{"num":195,"q":"Brutus's last words include 'I killed not thee with half so good a will.' What does this suggest about his emotional state throughout the play?","choices":["He had no regrets about killing Caesar until the end","He was psychologically burdened by guilt over Caesar's murder, and his own death is experienced almost as a relief from that guilt and from defeat","He is finally expressing his hatred of Caesar openly","He blames Caesar for everything that has happened"],"correct":1,"cat":"Quote ID & Plot"},{"num":196,"q":"Which conspirator does Antony greet last when shaking hands after the assassination, identified as 'though last, not least in love'?","choices":["Casca","Decius","Trebonius","Cinna"],"correct":2,"cat":"Quote ID & Plot"},{"num":197,"q":"What does Lucilius do on the battlefield that shows remarkable devotion to Brutus?","choices":["He disguises himself as Brutus and allows himself to be captured to protect Brutus","He rides alone into enemy lines to deliver a message","He carries Brutus's injured body from the battlefield","He kills three of Antony's soldiers single-handedly"],"correct":0,"cat":"Quote ID & Plot"},{"num":198,"q":"What is Lucius doing just before the ghost of Caesar appears to Brutus?","choices":["Keeping watch outside the tent","Carrying a message to Cassius","Playing music until he falls asleep","Reading Brutus's book aloud"],"correct":2,"cat":"Quote ID & Plot"},{"num":199,"q":"Cassius says at Philippi: 'This is my birthday; as this very day / Was Cassius born.' Why does Shakespeare include this detail?","choices":["To celebrate Cassius with the soldiers","To add poignancy: the day of his birth becomes the day of his death, giving his end a sense of tragic completion","To show Cassius is superstitious about his birthday","To explain why Cassius is in a good mood before the battle"],"correct":1,"cat":"Quote ID & Plot"},{"num":200,"q":"Caesar says casually to Trebonius: 'I have an hour's talk in store for you.' This is spoken on the morning of the ides of March. What makes this passage chilling?","choices":["Caesar is about to betray the conspirators himself","Caesar's casual, friendly manner with a man who will help kill him within hours; the dramatic irony is at its most intense","Caesar is warning them that he knows about the plot","Caesar is drunk and does not recognize the conspirators"],"correct":1,"cat":"Quote ID & Plot"},{"num":201,"q":"Which characters die by suicide or self-directed death in Julius Caesar?","choices":["Only Brutus","Only Cassius","Caesar, Cassius, and Brutus","Titinius, Cassius, and Brutus"],"correct":3,"cat":"Quote ID & Plot"},{"num":202,"q":"How does Antony describe his attitude toward Lepidus to Octavius in Act 4.1?","choices":["As a trusted equal partner in governance","As a useful but expendable tool, like a horse or pack animal to be used and discarded","As a dangerous rival who must be watched carefully","As a loyal friend who deserves all the honors of their alliance"],"correct":1,"cat":"Quote ID & Plot"},{"num":203,"q":"Antony compares Lepidus to a horse. What is the core point of this metaphor?","choices":["Lepidus is fast and useful in battle","Lepidus is powerful but untamed","Lepidus is a creature to be trained, directed, and discarded when no longer useful, with no more status than a horse","Lepidus will carry messages reliably"],"correct":2,"cat":"Quote ID & Plot"},{"num":204,"q":"In Act 5.1, Octavius insists on leading the right side of the battle formation, against Antony's instruction. This minor conflict suggests what about their alliance?","choices":["They are perfectly aligned in their goals","There is an undercurrent of rivalry and competition for control, foreshadowing their eventual historical conflict","Octavius is a stronger general than Antony","They are following standard Roman military protocol"],"correct":1,"cat":"Quote ID & Plot"},{"num":205,"q":"Antony calls Lepidus 'slight and unmeritable'; Octavius calls him 'a tried and valiant soldier.' This exchange shows what contrast?","choices":["Octavius values loyalty over political calculation; Antony is purely cynical","Antony is more strategically ruthless and willing to use people; Octavius is more just in his assessments of others","Antony likes Lepidus personally; Octavius does not","Octavius is older and wiser than Antony"],"correct":1,"cat":"Quote ID & Plot"},{"num":206,"q":"How many total times does Caesar encounter the warning 'Beware the ides of March' or a variant of it?","choices":["Once, from the Soothsayer","Twice: Soothsayer in Act 1 and Artemidorus's letter","Three times: from the Soothsayer in Act 1, from Artemidorus, and from the Soothsayer again as he enters the Senate in Act 3","Four times including Calphurnia"],"correct":2,"cat":"Quote ID & Plot"},{"num":207,"q":"Calphurnia says she 'never stood on ceremonies / Yet now they fright me' and describes horrors. What is the dramatic purpose?","choices":["To slow the action down before the climax","To heighten tension before the assassination by showing that even a non-superstitious person is alarmed, suggesting the omens are genuine","To show Rome is a dangerous place at night","To introduce the theme of witchcraft"],"correct":1,"cat":"Quote ID & Plot"},{"num":208,"q":"Who was Portia's father, and why does she invoke him when arguing with Brutus?","choices":["Pompey, to show noble military blood","Cato, a man famous for unbending Stoic virtue and political integrity, to show she has the strength to be trusted with Brutus's secrets","Caesar, ironically, to show political connections","Cicero, to show she has the gift of rhetoric"],"correct":1,"cat":"Quote ID & Plot"},{"num":209,"q":"What is the name of Cassius's slave who guides the sword that kills Cassius?","choices":["Titinius","Strato","Pindarus","Lucilius"],"correct":2,"cat":"Quote ID & Plot"},{"num":210,"q":"Where does the final battle of the play take place?","choices":["Rome","Sardis","Philippi","Gaul"],"correct":2,"cat":"Quote ID & Plot"},{"num":211,"q":"After Caesar's ghost vanishes, Brutus says 'Now I have taken heart, thou vanishest.' What does 'taken heart' mean here?","choices":["He has taken courage now that the ghost is gone","He has taken Caesar's heart as a metaphor for regret","He has regained his resolve to fight at Philippi","He now believes the ghost was an illusion"],"correct":0,"cat":"Quote ID & Plot"},{"num":212,"q":"Antony says 'The evil that men do lives after them; / The good is oft interred with their bones. / So let it be with Caesar.' How is Antony using this statement rhetorically?","choices":["He is being honest about Caesar's flaws","He is pretending to agree that Caesar's evil lives on while systematically undermining that claim by listing Caesar's virtues, making the audience question the premise","He is trying to excuse his own future actions","He is quoting a popular Roman proverb to appear educated"],"correct":1,"cat":"Quote ID & Plot"},{"num":213,"q":"Caesar's murder takes place at the base of Pompey's statue. What is the significance of this location?","choices":["Pompey's statue was the only place where assassination was legally permitted","It is ironic: Caesar, who defeated Pompey, is murdered under Pompey's gaze, as if Pompey's spirit has taken revenge","The conspirators chose it randomly","It was the only private place in the Senate"],"correct":1,"cat":"Quote ID & Plot"},{"num":214,"q":"Strato says 'For Brutus only overcame himself, / And no man else hath honor by his death.' What does this mean?","choices":["Brutus was his own greatest enemy","Brutus died by his own hand; no external force defeated him, so no one can claim credit for conquering him","Brutus's death was meaningless","Strato is criticizing Brutus for committing suicide"],"correct":1,"cat":"Quote ID & Plot"},{"num":215,"q":"Which conspirator's name is the same as an innocent poet who is attacked and nearly torn apart by the mob in Act 3.3?","choices":["Casca","Brutus","Cinna","Decius"],"correct":2,"cat":"Quote ID & Plot"},{"num":266,"q":"Which of the following best explains why Brutus is considered a tragic hero in the Aristotelian sense?","choices":["He is betrayed by his closest friend","He is a noble man whose fatal flaw — idealism divorced from practical wisdom — leads directly to his own destruction","He is punished by the gods for committing murder","He is simply unlucky in battle"],"correct":1,"cat":"Advanced Questions"},{"num":267,"q":"Antony's technique of repeating 'Brutus is an honorable man' while systematically undermining that claim is best described as:","choices":["Synecdoche","Occupatio combined with irony: pretending to defend someone while actually destroying their credibility","Enthymeme with a missing premise","Anaphora for emotional effect only"],"correct":1,"cat":"Advanced Questions"},{"num":268,"q":"Shakespeare uses the Latin phrase 'Et tu, Brutè' even though the rest of the play is in English. The most likely reason is:","choices":["Shakespeare did not know the English equivalent","The Latin is historically authentic and lends Caesar's dying words a timeless, universal quality; it was already famous from historical accounts","Latin was considered more poetic than English","Caesar could only speak Latin"],"correct":1,"cat":"Advanced Questions"},{"num":269,"q":"In the quarrel scene, Brutus says he will treat Cassius's bad behavior as 'dishonor shall be humor.' What does 'humor' mean here?","choices":["Something funny","One of the four bodily fluids affecting personality; Brutus means he will treat it as a mood flaw, not a real dishonor","A comical exaggeration","A theatrical performance"],"correct":1,"cat":"Advanced Questions"},{"num":270,"q":"Casca describes the commoners at the Lupercal as the 'rabblement' who 'threw up their sweaty nightcaps.' What does his language reveal?","choices":["He admires their enthusiasm","He is contemptuous of the lower classes, using language that is disgusted and dismissive","He is neutral, simply describing what he saw","He is envious of their freedom to show emotion publicly"],"correct":1,"cat":"Advanced Questions"},{"num":271,"q":"When Octavius refuses to yield to Antony about the right side of the battlefield in Act 5.1, this suggests what about their triumvirate?","choices":["It is a perfectly equal partnership","Octavius is already establishing dominance and refuses to be subordinate — a sign of future conflict between them","Antony and Octavius have no tension","Octavius is more experienced than Antony"],"correct":1,"cat":"Advanced Questions"},{"num":272,"q":"Which best describes iambic pentameter, the verse form Shakespeare uses?","choices":["Lines with exactly 10 stressed syllables","Lines with five feet, each an unstressed syllable followed by a stressed one (da-DUM), giving 10 syllables per line","Lines with six stressed beats alternating with rests","Lines in rhyming couplets with eight syllables each"],"correct":1,"cat":"Advanced Questions"},{"num":273,"q":"At the start of Act 3.1, Caesar says 'What touches us ourself shall be last served' to Artemidorus. This is deeply ironic because:","choices":["Artemidorus's letter actually praises Caesar","The very thing 'touching Caesar himself' (the assassination plot) is what he refuses to hear; by dismissing the personal matter first, he seals his own fate","Caesar is being politely modest","The letter from Artemidorus is a forgery by the conspirators"],"correct":1,"cat":"Advanced Questions"},{"num":274,"q":"When Antony says 'over thy wounds now do I prophesy' alone with Caesar's body, his use of 'prophesy' suggests:","choices":["He is pretending to have divine powers","He is channeling his grief into an almost oracular proclamation of revenge and civil war, presenting Caesar's spirit as working through him","He is performing a religious ritual","He is warning the conspirators still present"],"correct":1,"cat":"Advanced Questions"},{"num":275,"q":"Brutus calls Portia 'As dear to me as are the ruddy drops / That visit my sad heart' but does not immediately share his secret with her. What does this reveal?","choices":["He does not truly trust Portia despite his words","He loves Portia deeply but separates his domestic and political selves, keeping the conspiracy from her to protect both her and the plot — even as she correctly senses something is wrong","He is planning to tell her eventually","He forgot about the conspiracy for a moment"],"correct":1,"cat":"Advanced Questions"},{"num":276,"q":"Caesar is portrayed as both a great man and as physically weak and vain. What effect does this dual portrayal create?","choices":["It makes Caesar a villain rather than a tragic figure","It creates ambiguity: the assassination of a man who was both great and flawed makes it impossible to simply condemn or endorse the act, placing the moral question in the audience's hands","It excuses the conspirators by showing Caesar deserved to die","It makes Caesar into a purely sympathetic martyr"],"correct":1,"cat":"Advanced Questions"},{"num":277,"q":"The play begins with tribunes controlling crowds and ends with Octavius establishing order over a battlefield. How does this structural choice reinforce the theme of cyclical history?","choices":["It shows Rome is always well-governed","The opening mirrors the closing: power and authority reassert themselves even after violent rupture, suggesting the assassination changes nothing fundamental in how Rome is governed","It shows common people never have power in Rome","It demonstrates Shakespeare's admiration for military government"],"correct":1,"cat":"Advanced Questions"},{"num":278,"q":"'I fear there will a worse come in his place' is spoken by a Plebeian in Act 3.2. What does this presage?","choices":["The crowd has completely lost faith in the conspirators","It foreshadows the civil war and the tyranny that follows: Caesar is replaced not by freedom but by the brutal triumvirate and its proscriptions","The Plebeian is simply mourning Caesar","It is a direct reference to Brutus becoming the new ruler"],"correct":1,"cat":"Advanced Questions"},{"num":279,"q":"'Friends, Romans, countrymen, lend me your ears' is more rhetorically effective than Brutus's opening 'Romans, countrymen, and lovers, hear me for my cause' because:","choices":["It is shorter","Antony puts 'Friends' first, building personal connection before invoking patriotism; Brutus's opening is more formal and distancing","Antony's uses more active verbs","Antony's line rhymes and is therefore more memorable"],"correct":1,"cat":"Advanced Questions"},{"num":280,"q":"Cassius sends forged notes through Brutus's window, pretending they are from various Roman citizens. What does this deception tell us about Cassius's methods?","choices":["Cassius is an honest man who uses conventional persuasion","Cassius is pragmatic and willing to use manipulation and forgery to achieve his goals, contrasting with Brutus's insistence on honor and transparency","Cassius fears that Brutus would refuse a direct request","Cassius is simply saving time"],"correct":1,"cat":"Advanced Questions"},{"num":281,"q":"The Soothsayer in Act 2.4 tells Portia: 'None that I know will be, much that I fear may chance.' What does this maintain about his dramatic role?","choices":["He knows about the conspiracy and has been paid to warn Caesar","He does not know for certain that any harm is planned, but fears something bad will happen; this ambiguity maintains his role as a figure of prophetic dread without directly revealing the plot","He is lying to Portia to protect the conspirators","He knows everything and is being deliberately evasive"],"correct":1,"cat":"Advanced Questions"},{"num":282,"q":"Which of the following is TRUE about the historical Julius Caesar, also portrayed in Shakespeare's play?","choices":["Caesar refused the crown when offered it publicly three times","Caesar defeated Pompey in a civil war before becoming dictator","Caesar was a member of the First Triumvirate with Pompey and Crassus","All of the above"],"correct":3,"cat":"Advanced Questions"},{"num":283,"q":"The Globe Theatre was open-air, performing in daylight. How did Shakespeare convey nighttime scenes without artificial lighting?","choices":["Actors wore black costumes","Through explicit dialogue: characters discuss stars, darkness, torches, and the time, so the audience understood the setting imaginatively","The theatre had a system of curtains that blocked sunlight","Nighttime scenes were never performed at the Globe"],"correct":1,"cat":"Advanced Questions"},{"num":284,"q":"The play is called 'The Tragedy of Julius Caesar,' yet Caesar dies in Act 3 and the last two acts focus on Brutus. Which character more accurately fits the classical tragic hero arc?","choices":["Mark Antony, because he survives and inherits power","Julius Caesar, because the play bears his name","Brutus, because he undergoes the classic arc from admired noble to fallen man, with his internal conflict and ultimate failure at the play's emotional center","Cassius, because he is the architect of events"],"correct":2,"cat":"Advanced Questions"},{"num":285,"q":"Antony calls the conspirators 'the choice and master spirits of this age' in Act 3.1 when he arrives at the Senate. Is he being sincere or ironic?","choices":["Sincere: he genuinely respects them at this moment","Bitterly ironic or sarcastic: calling his friend's killers 'master spirits' is a cutting acknowledgment of their power while actually expressing contempt and grief","Neutral: it is a formal honorific","Uncertain, since Antony's emotions in this scene are unknowable"],"correct":1,"cat":"Advanced Questions"},{"num":286,"q":"Brutus uses a triple rhetorical structure ending in 'as he was ambitious, I slew him.' The use of 'but' before this final clause is meant to:","choices":["Apologize for the killing","Turn all the previous positive statements on their head; ambition negates all Caesar's other virtues in Brutus's argument, making the killing seem not just justified but mandatory","Acknowledge that the killing was wrong","Express Brutus's personal regret"],"correct":1,"cat":"Advanced Questions"},{"num":287,"q":"Which of the following is the best example of a soliloquy in Julius Caesar?","choices":["'Friends, Romans, countrymen, lend me your ears' (spoken to a crowd)","'Et tu, Brutè?' (spoken as Caesar is dying)","'It must be by his death. And for my part / I know no personal cause to spurn at him' (Brutus alone in his orchard)","'The fault, dear Brutus, is not in our stars' (spoken to Brutus)"],"correct":2,"cat":"Advanced Questions"},{"num":288,"q":"'Ate' is invoked by Antony: 'Caesar's spirit, ranging for revenge, / With Ate by his side come hot from hell.' Who or what is Ate?","choices":["A Roman goddess of love","A Greek personification of ruin, delusion, and vengeful destruction","A river in the Roman underworld","An Etruscan war goddess"],"correct":1,"cat":"Advanced Questions"},{"num":289,"q":"Brutus says conspirators' Roman blood is 'guilty of a several bastardy / If he do break the smallest particle / Of any promise.' What does 'several bastardy' mean?","choices":["Each Roman is individually guilty of treachery","Each drop of blood is separately degraded/illegitimized if a promise is broken, meaning the entire Roman heritage is compromised by oath-breaking","A legal term for individual criminal liability","A medical term for blood disease"],"correct":1,"cat":"Advanced Questions"},{"num":290,"q":"Antony says Caesar's will is 'not meet' to be read publicly. In this context, 'meet' means:","choices":["To encounter or come across","Fitting or appropriate","A type of gathering","A sports competition"],"correct":1,"cat":"Advanced Questions"},{"num":291,"q":"Cassius tells Brutus: 'Write them together, yours is as fair a name; / Sound them, it doth become the mouth as well; / Weigh them, it is as heavy; conjure with 'em.' What is the cumulative rhetorical effect of these three comparisons?","choices":["To prove that Cassius himself is better than Caesar","To prove by multiple measures that Brutus's name is equal to Caesar's in every way, and therefore Caesar has no natural right to superiority","To prove that Caesar is a poor name for a Roman ruler","To suggest Brutus should take Caesar's place as ruler"],"correct":1,"cat":"Advanced Questions"},{"num":292,"q":"Portia says: 'Dwell I but in the suburbs / Of your good pleasure? If it be no more, / Portia is Brutus' harlot, not his wife.' What argument is Portia making?","choices":["She is threatening to leave Brutus","She is arguing that a wife not trusted with her husband's secrets occupies only the periphery of marriage, reducing her to less than a wife","She is angry about Brutus neglecting their home","She is challenging Brutus to a debate about marriage"],"correct":1,"cat":"Advanced Questions"},{"num":293,"q":"In Act 1, which character speaks primarily in prose when reporting on the Lupercal events, and what does this suggest about their character?","choices":["Antony, showing his military rather than political nature","Casca, giving his narration a blunt, cynical, down-to-earth quality that contrasts with the more idealistic characters","Brutus, when troubled","Caesar, to show his common touch"],"correct":1,"cat":"Advanced Questions"},{"num":294,"q":"'Let's be sacrificers, but not butchers, Caius. / We all stand up against the spirit of Caesar.' This speech reveals Brutus's tendency to:","choices":["Be unnecessarily violent","Aestheticize the act of murder, viewing the assassination as a ceremonial sacrifice rather than a political killing — which prevents him from being sufficiently ruthless in ensuring its success","Show too much mercy toward his enemies","Consult Cassius before making any decision"],"correct":1,"cat":"Advanced Questions"},{"num":295,"q":"Octavius's final speech ordering Brutus honored like a soldier before saying 'so call the field to rest' strikes what tone?","choices":["Triumphant celebration by Antony and Octavius","Somber, ordered resolution: the chaos of civil war is ended and peace restored, but at great cost, leaving bittersweet rather than triumphant closure","Ongoing threat, since Caesar's spirit still ranges over Rome","Personal grief, since Octavius mourns all those who died"],"correct":1,"cat":"Advanced Questions"},{"num":296,"q":"The word 'honor' is invoked over 50 times in Julius Caesar. All major characters claim to act honorably. What does this proliferation suggest as a theme?","choices":["All the characters are genuinely honorable men","'Honor' is a contested and unstable concept: each character uses it to justify wildly different actions, showing the word itself can be weaponized and that truly honorable action is difficult to define","Roman society was more ethical than modern society","Shakespeare believed honor was the most important virtue"],"correct":1,"cat":"Advanced Questions"},{"num":297,"q":"After Caesar's murder, Brutus tells Antony: 'Our hearts you see not; they are pitiful; / And pity to the general wrong of Rome... Hath done this deed.' What is Brutus's argument?","choices":["He is apologizing to Antony","He claims the conspirators were motivated by pity for Rome, not hatred of Caesar, framing the murder as an act of compassion rather than violence","He is arguing that Antony should join the conspiracy","He is warning Antony to leave Rome immediately"],"correct":1,"cat":"Advanced Questions"},{"num":298,"q":"Caesar dismisses the soothsayer and refuses Artemidorus's letter, ignoring all warnings. 'Hubris' as a concept in tragic literature means:","choices":["Wisdom gained through suffering","Excessive pride or arrogance that causes a great person to ignore warnings and limitations, typically leading to their downfall","The moment of recognition before a tragic hero dies","The conflict between fate and free will"],"correct":1,"cat":"Advanced Questions"},{"num":299,"q":"'There is no terror, Cassius, in your threats, / For I am armed so strong in honesty / That they pass by me as the idle wind, / Which I respect not.' What does this reveal about Brutus's self-image?","choices":["Brutus is boasting recklessly to intimidate Cassius","Brutus genuinely believes his personal integrity is his greatest protection, more powerful than any physical threat; this reveals his idealism and a form of moral pride","Brutus is quoting a famous Roman philosopher","Brutus has already decided to abandon the conspiracy"],"correct":1,"cat":"Advanced Questions"},{"num":300,"q":"Julius Caesar was written approximately in 1599 CE. The events it depicts occurred in 44 BCE. Shakespeare was therefore writing about events roughly how many years in the past?","choices":["About 500 years in the past","About 1,500 years in the past","About 1,643 years in the past","About 750 years in the past"],"correct":2,"cat":"Advanced Questions"}];
+</script>
+<script id="questions-data"></script>
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────
+let pool = [];
+let qIdx = 0;
+let score = 0;
+let correct = 0;
+let wrong = 0;
+let streak = 0;
+let timerInterval = null;
+let timerSeconds = 20;
+let timeLeft = 20;
+let answered = false;
+let wrongList = [];
+let lastSettings = null;
+const CIRCUMFERENCE = 2 * Math.PI * 34; // ~213.6
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function grade(pct) {
+  if (pct >= 95) return { emoji: '🏆', label: 'Perfect! You know Julius Caesar cold.', trophy: '🥇' };
+  if (pct >= 80) return { emoji: '🎉', label: 'Excellent! Strong command of the material.', trophy: '🏆' };
+  if (pct >= 65) return { emoji: '👍', label: 'Good work! A bit more review and you\'ll ace it.', trophy: '🥈' };
+  if (pct >= 50) return { emoji: '📚', label: 'Decent effort — review the sections you missed.', trophy: '🥉' };
+  return { emoji: '😬', label: 'More study needed. Try a specific category next time!', trophy: '📖' };
+}
+
+// ── START ─────────────────────────────────────────────────────────────────
+function startGame(repeat) {
+  const cat = repeat && lastSettings ? lastSettings.cat : document.getElementById('sel-category').value;
+  const count = repeat && lastSettings ? lastSettings.count
+    : Math.max(5, Math.min(250, parseInt(document.getElementById('sel-count').value) || 20));
+  const doShuffle = repeat && lastSettings ? lastSettings.shuffle
+    : document.getElementById('sel-shuffle').checked;
+  timerSeconds = repeat && lastSettings ? lastSettings.timer
+    : Math.max(5, Math.min(60, parseInt(document.getElementById('sel-timer').value) || 20));
+
+  lastSettings = { cat, count, shuffle: doShuffle, timer: timerSeconds };
+
+  let filtered = cat === 'all' ? ALL_QUESTIONS : ALL_QUESTIONS.filter(q => q.cat === cat);
+  if (doShuffle) filtered = shuffle(filtered);
+  pool = filtered.slice(0, count);
+
+  // Shuffle answer order per question if needed
+  if (doShuffle) {
+    pool = pool.map(q => {
+      const order = shuffle([0, 1, 2, 3]);
+      return {
+        ...q,
+        choices: order.map(i => q.choices[i]),
+        correct: order.indexOf(q.correct),
+        _originalOrder: order
+      };
+    });
+  }
+
+  qIdx = 0;
+  score = 0;
+  correct = 0;
+  wrong = 0;
+  streak = 0;
+  wrongList = [];
+
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+// ── QUESTION ──────────────────────────────────────────────────────────────
+function renderQuestion() {
+  answered = false;
+  const q = pool[qIdx];
+
+  document.getElementById('q-counter').textContent = `${qIdx + 1} / ${pool.length}`;
+  document.getElementById('progress-bar').style.width = `${(qIdx / pool.length) * 100}%`;
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('q-cat').textContent = q.cat;
+  document.getElementById('question-text').textContent = `${q.num}. ${q.q}`;
+
+  const icons = ['▲', '◆', '●', '★'];
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-icon">${icons[i]}</span><span class="choice-text">${text}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    choicesEl.appendChild(btn);
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  document.getElementById('next-btn').className = 'next-btn';
+
+  startTimer();
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = timerSeconds;
+  updateTimerUI();
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) timeUp();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const arc = document.getElementById('timer-arc');
+  const num = document.getElementById('timer-num');
+  const fraction = timeLeft / timerSeconds;
+  arc.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
+  num.textContent = timeLeft;
+  arc.style.stroke = fraction > 0.4 ? '#f5b800' : fraction > 0.2 ? '#ff8c00' : '#e21b3c';
+}
+
+function timeUp() {
+  answered = true;
+  wrong++;
+  streak = 0;
+  const q = pool[qIdx];
+  revealAnswer(q.correct, -1);
+  showFeedback(false, q.choices[q.correct], '⏰ Time\'s up!');
+  wrongList.push({ q, yourIdx: -1 });
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+// ── ANSWER ────────────────────────────────────────────────────────────────
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = pool[qIdx];
+  const isCorrect = idx === q.correct;
+
+  if (isCorrect) {
+    const pts = Math.max(100, Math.round(500 * (timeLeft / timerSeconds)));
+    score += pts;
+    correct++;
+    streak++;
+    if (streak >= 3) showStreak(streak);
+  } else {
+    wrong++;
+    streak = 0;
+    wrongList.push({ q, yourIdx: idx });
+  }
+
+  revealAnswer(q.correct, idx);
+  showFeedback(isCorrect, q.choices[q.correct]);
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+function revealAnswer(correctIdx, chosenIdx) {
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correctIdx) btn.classList.add('reveal');
+    else if (i === chosenIdx) btn.classList.add('wrong');
+    else btn.style.opacity = '0.45';
+  });
+}
+
+function showFeedback(isCorrect, correctText, prefix) {
+  const fb = document.getElementById('feedback');
+  const icon = document.getElementById('fb-icon');
+  const title = document.getElementById('fb-title');
+  const body = document.getElementById('fb-body');
+
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show';
+    icon.textContent = '✅';
+    title.textContent = `Correct! +${Math.max(100, Math.round(500 * (timeLeft / timerSeconds)))} pts`;
+    body.textContent = '';
+  } else {
+    fb.className = 'feedback wrong-fb show';
+    icon.textContent = '❌';
+    title.textContent = prefix || 'Wrong!';
+    body.textContent = `Correct answer: ${correctText}`;
+  }
+}
+
+function showStreak(n) {
+  const el = document.getElementById('streak-banner');
+  el.textContent = n >= 10 ? `🔥🔥 ${n} in a row!!` : `🔥 ${n} in a row!`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── NEXT ──────────────────────────────────────────────────────────────────
+function nextQuestion() {
+  qIdx++;
+  if (qIdx >= pool.length) {
+    showResults();
+  } else {
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+}
+
+// ── RESULTS ───────────────────────────────────────────────────────────────
+function showResults() {
+  const pct = Math.round((correct / pool.length) * 100);
+  const g = grade(pct);
+
+  document.getElementById('result-trophy').textContent = g.trophy;
+  document.getElementById('result-heading').textContent = `${g.emoji} Quiz Complete!`;
+  document.getElementById('r-correct').textContent = correct;
+  document.getElementById('r-wrong').textContent = wrong;
+  document.getElementById('r-pct').textContent = pct + '%';
+  document.getElementById('score-grade').innerHTML = `<span>${pct}% — </span>${g.label}`;
+
+  const missedList = document.getElementById('missed-list');
+  missedList.innerHTML = '';
+  const ms = document.getElementById('missed-section');
+
+  if (wrongList.length === 0) {
+    ms.style.display = 'none';
+  } else {
+    ms.style.display = 'block';
+    document.querySelector('.missed-section h3').textContent = `❌ Missed (${wrongList.length})`;
+    wrongList.forEach(({ q, yourIdx }) => {
+      const div = document.createElement('div');
+      div.className = 'missed-item';
+      div.innerHTML = `
+        <div class="mq"><strong>Q${q.num}.</strong> ${q.q}</div>
+        <div class="mc">
+          ${yourIdx >= 0 ? `<span class="your">✗ Your answer: ${q.choices[yourIdx]}</span><br>` : '<span class="your">✗ Timed out</span><br>'}
+          <span class="right">✓ Correct: ${q.choices[q.correct]}</span>
+        </div>`;
+      missedList.appendChild(div);
+    });
+  }
+
+  document.getElementById('progress-bar').style.width = '100%';
+  showScreen('results-screen');
+}
+</script>
+
+<script>
+// Inject the questions data
+(function() {
+  const DATA_PLACEHOLDER = 'QUESTIONS_JSON_HERE';
+  // The actual data is below
+})();
+</script>
+
+</body>
+</html>
+
