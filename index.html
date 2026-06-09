@@ -364,6 +364,38 @@
 
   <button class="btn-start" onclick="startGame()">🚀 Start Quiz</button>
   <p style="font-size:0.8rem;color:#555;margin-top:8px;">Note: Questions 216–265 are missing from the source document.</p>
+  <button class="btn-secondary" onclick="showEmbedModal()" style="margin-top:4px;font-size:0.85rem;padding:8px 18px;">🔗 Embed in Google Sites</button>
+</div>
+
+<!-- ══════════ EMBED MODAL ══════════ -->
+<div id="embed-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#16213e;border-radius:12px;padding:28px 24px;max-width:560px;width:100%;position:relative;">
+    <button onclick="closeEmbedModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#aaa;font-size:1.4rem;cursor:pointer;">✕</button>
+    <h3 style="margin-bottom:6px;font-size:1.2rem;">Embed in Google Sites</h3>
+    <p style="color:#aaa;font-size:0.9rem;margin-bottom:20px;">Follow these steps to add this quiz to any Google Site:</p>
+
+    <ol style="color:#ccc;font-size:0.88rem;line-height:2;padding-left:20px;margin-bottom:20px;">
+      <li>Open your Google Site and click <strong style="color:#eee;">Insert → Embed</strong></li>
+      <li>Choose <strong style="color:#eee;">"By URL"</strong> and paste the URL below</li>
+      <li>Click <strong style="color:#eee;">Insert</strong>, then resize the embed block to <strong style="color:#eee;">at least 700 × 650 px</strong></li>
+      <li>Click <strong style="color:#eee;">Publish</strong> on your Google Site</li>
+    </ol>
+
+    <label style="font-size:0.75rem;color:#aaa;text-transform:uppercase;letter-spacing:.05em;">Your quiz URL</label>
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <input id="embed-url" readonly
+        style="flex:1;padding:10px 12px;border-radius:8px;border:2px solid #333;background:#0f172a;color:#eee;font-size:0.9rem;font-family:monospace;"
+        value="(deploy to Vercel first to get your URL)">
+      <button onclick="copyEmbedUrl()" id="copy-btn"
+        style="background:#f5b800;color:#111;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;white-space:nowrap;">
+        Copy
+      </button>
+    </div>
+
+    <div style="margin-top:16px;background:#0f172a;border-radius:8px;padding:12px 14px;font-size:0.8rem;color:#aaa;line-height:1.6;">
+      <strong style="color:#eee;">💡 Tip:</strong> After inserting, drag the bottom edge of the embed block taller so the full quiz fits without scrollbars. 700 px wide × 700 px tall works well.
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ QUIZ SCREEN ══════════ -->
@@ -685,6 +717,41 @@ function showResults() {
   document.getElementById('progress-bar').style.width = '100%';
   showScreen('results-screen');
 }
+
+// ── EMBED MODAL ───────────────────────────────────────────────────────────
+function showEmbedModal() {
+  const modal = document.getElementById('embed-modal');
+  modal.style.display = 'flex';
+  const input = document.getElementById('embed-url');
+  const url = window.location.origin + window.location.pathname;
+  if (!url.includes('localhost') && !url.includes('127.0.0.1') && !url.includes('3500')) {
+    input.value = url;
+  }
+}
+
+function closeEmbedModal() {
+  document.getElementById('embed-modal').style.display = 'none';
+}
+
+function copyEmbedUrl() {
+  const input = document.getElementById('embed-url');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.style.background = '#26890c';
+    btn.style.color = '#fff';
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.style.background = '#f5b800';
+      btn.style.color = '#111';
+    }, 2000);
+  });
+}
+
+// Close modal on backdrop click
+document.getElementById('embed-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEmbedModal();
+});
 </script>
 
 <script>
